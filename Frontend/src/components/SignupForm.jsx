@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -15,10 +15,13 @@ import { faUserShield } from "@fortawesome/free-solid-svg-icons";
 function SignupForm() {
   const [year, setYear] = useState("");
   const [semester, setSemester] = useState("");
+  const [department, setDepartment] = useState("");
   const [selectedRole, setSelectedRole] = useState("admin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
   const handleRoleChange = (role) => {
     setSelectedRole(role);
@@ -26,6 +29,10 @@ function SignupForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!firstName || !lastName || !email || !password || !confirmPassword || !year || !semester || !department) {
+      alert("Please fill in all required fields!");
+      return;
+    }
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
@@ -36,16 +43,24 @@ function SignupForm() {
       selectedRole,
       year,
       semester,
+      department,
+      firstName,
+      lastName,
     });
   };
 
   const handleYearChange = (event) => {
     setYear(event.target.value);
     setSemester(""); // Reset semester when year changes
+    setDepartment(""); // Reset department when year changes
   };
 
   const handleSemesterChange = (event) => {
     setSemester(event.target.value);
+  };
+
+  const handleDepartmentChange = (event) => {
+    setDepartment(event.target.value);
   };
 
   // Define semesters based on selected year
@@ -56,12 +71,21 @@ function SignupForm() {
     "4th Year": ["7th Semester", "8th Semester"],
   };
 
+  // Define departments based on selected year
+  const departmentOptions = {
+    "1st Year": ["FY1", "FY2", "FY3", "FY4", "FY5"],
+    "2nd Year": ["SY1", "SY2", "SY3", "SY4", "SY5"],
+    "3rd Year": ["TY1", "TY2", "TY3", "TY4", "TY5"],
+    "4th Year": ["FFY1", "FFY2", "FFY3", "FFY4", "FFY5"],
+  };
+
   return (
     <div className="flex min-h-screen">
       {/* Left Panel */}
       <div
         className="w-2/5 flex flex-col items-center justify-center p-6 rounded-r-2xl"
-        style={{ backgroundColor: "#025A9E" }}>
+        style={{ backgroundColor: "#025A9E" }}
+      >
         <div className="text-white text-4xl font-bold">
           Welcome to LJ University <br /> Access Hub
         </div>
@@ -73,11 +97,12 @@ function SignupForm() {
         </div>
         <div className="h-10" />
         <div className="text-3xl font-bold" style={{ color: "#FFDB47" }}>
-          10k+ &nbsp; 500+ &nbsp; 300+
+          10k+   500+   300+
         </div>
         <div
           className="flex justify-center gap-12 text-white text-sm"
-          style={{ fontFamily: "-moz-initial" }}>
+          style={{ fontFamily: "-moz-initial" }}
+        >
           <span>Students</span>
           <span>Faculty</span>
           <span>Courses</span>
@@ -86,54 +111,82 @@ function SignupForm() {
 
       {/* Right Panel */}
       <div className="w-3/5 bg-blue-50 flex items-center justify-center">
-        <div className="p-10 bg-white rounded-xl shadow-lg w-full max-w-lg flex flex-col items-center justify-center">
+        <div className="p-10 bg-white rounded-xl shadow-lg w-full max-w-xl flex flex-col items-center justify-center my-5">
           <img
             src="/logo.jpeg"
             alt="LJ University logo"
             style={{ height: "6rem" }}
           />
-          <div className="h-5" />
           <div className="font-bold text-3xl" style={{ color: "#084C83" }}>
             LJ University Access Hub
           </div>
-          <div className="h-3" />
           <div className="text-lg" style={{ color: "#4B5563" }}>
             Sign up to access LJ University portal
           </div>
-          <div className="h-6" />
-
-          {/* Role Selection Cards */}
-          <div className="flex gap-4 mb-6">
-            <Card
-              className={`cursor-pointer ${
-                selectedRole === "admin"
-                  ? "border-4 border-blue-500"
-                  : "border border-gray-200"
-              }`}
-              sx={{
-                maxWidth: 200,
-                borderRadius: "0.5rem",
-                padding: "1rem",
-              }}
-              onClick={() => handleRoleChange("admin")}>
-              <CardContent className="flex flex-col items-center justify-center text-center">
-                <FontAwesomeIcon
-                  icon={faUserShield}
-                  className="text-yellow-500 text-4xl mb-2"
-                />
-                <Typography variant="h6">Admin</Typography>
-                <div className="h-4" />
-                <Typography variant="body2" color="textSecondary">
-                  System <br />
-                  configuration and management
-                </Typography>
-              </CardContent>
-            </Card>
-          </div>
+          <div className="h-4" />
 
           {/* Signup Form */}
           <form className="w-full" onSubmit={handleSubmit}>
-            <div className="font-bold text-lg">Email</div>
+            {/* Role Selection Cards */}
+            <div className="font-bold text-lg mb-2">Select Role</div>
+            <div className="flex justify-center gap-4 mb-4">
+              <Card
+                className={`cursor-pointer ${
+                  selectedRole === "admin"
+                    ? "border-4 border-blue-500"
+                    : "border border-gray-200"
+                }`}
+                sx={{
+                  maxWidth: 200,
+                  borderRadius: "0.5rem",
+                  padding: "1rem",
+                }}
+                onClick={() => handleRoleChange("admin")}
+              >
+                <CardContent className="flex flex-col items-center justify-center text-center">
+                  <FontAwesomeIcon
+                    icon={faUserShield}
+                    className="text-yellow-500 text-4xl mb-2"
+                  />
+                  <Typography variant="h6">Admin</Typography>
+                  <div className="h-4" />
+                  <Typography variant="body2" color="textSecondary">
+                    System <br />
+                    configuration and management
+                  </Typography>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Admin User Name */}
+            <div className="font-bold text-lg mb-2">Admin User Name</div>
+            <div className="flex flex-row justify-between gap-4 mb-4">
+              <div className="w-1/2">
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  margin="normal"
+                  variant="outlined"
+                  required
+                />
+              </div>
+              <div className="w-1/2">
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  margin="normal"
+                  variant="outlined"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="font-bold text-lg mb-2">Email</div>
             <TextField
               fullWidth
               label="Email"
@@ -141,8 +194,11 @@ function SignupForm() {
               onChange={(e) => setEmail(e.target.value)}
               margin="normal"
               variant="outlined"
+              required
             />
-            <div className="font-bold text-lg">Password</div>
+
+            {/* Password */}
+            <div className="font-bold text-lg mb-2">Password</div>
             <TextField
               fullWidth
               label="Password"
@@ -151,8 +207,11 @@ function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               margin="normal"
               variant="outlined"
+              required
             />
-            <div className="font-bold text-lg">Confirm Password</div>
+
+            {/* Confirm Password */}
+            <div className="font-bold text-lg mb-2">Confirm Password</div>
             <TextField
               fullWidth
               label="Confirm Password"
@@ -161,18 +220,23 @@ function SignupForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               margin="normal"
               variant="outlined"
+              required
             />
-            <div className="flex flex-row justify-between gap-4">
-              <div className="w-1/2">
-                <div className="font-bold text-lg">Year</div>
-                <FormControl variant="standard" sx={{ m: 1, minWidth: 130 }}>
+
+            {/* Academic Details */}
+            <div className="font-bold text-lg mb-2">Academic Details</div>
+            <div className="flex flex-row justify-between gap-4 mb-4">
+              <div className="w-1/3">
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
                   <InputLabel id="year-select-label">Academic Year</InputLabel>
                   <Select
                     labelId="year-select-label"
                     id="year-select"
                     value={year}
                     onChange={handleYearChange}
-                    label="Academic Year">
+                    label="Academic Year"
+                    required
+                  >
                     <MenuItem value="">
                       <em>None</em>
                     </MenuItem>
@@ -183,9 +247,8 @@ function SignupForm() {
                   </Select>
                 </FormControl>
               </div>
-              <div className="w-1/2">
-                <div className="font-bold text-lg">Semester</div>
-                <FormControl variant="standard" sx={{ m: 1, minWidth: 130 }}>
+              <div className="w-1/3">
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
                   <InputLabel id="semester-select-label">Semester</InputLabel>
                   <Select
                     labelId="semester-select-label"
@@ -193,7 +256,8 @@ function SignupForm() {
                     value={semester}
                     onChange={handleSemesterChange}
                     label="Semester"
-                    disabled={!year} // Disable if no year is selected
+                    disabled={!year}
+                    required
                   >
                     <MenuItem value="">
                       <em>None</em>
@@ -207,35 +271,68 @@ function SignupForm() {
                   </Select>
                 </FormControl>
               </div>
+              <div className="w-1/3">
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
+                  <InputLabel id="department-select-label">Department</InputLabel>
+                  <Select
+                    labelId="department-select-label"
+                    id="department-select"
+                    value={department}
+                    onChange={handleDepartmentChange}
+                    label="Department"
+                    disabled={!year}
+                    required
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {year &&
+                      departmentOptions[year].map((dept) => (
+                        <MenuItem key={dept} value={dept}>
+                          {dept}
+                        </MenuItem>
+                      ))}
+                  </Select>
+                </FormControl>
+              </div>
             </div>
-            <div className="flex justify-end">
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end mb-4">
               <a
                 href="#"
                 className="text-blue-600 text-sm hover:underline"
-                style={{ color: "#0270C2", fontWeight: "400" }}>
+                style={{ color: "#0270C2", fontWeight: "400" }}
+              >
                 Forgot password?
               </a>
             </div>
+
+            {/* Submit Button */}
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              className="mt-4 font-bold text-sm"
+              className="mb-4 font-bold text-sm"
               style={{
                 backgroundColor: "#084C83",
                 color: "white",
                 padding: "0.6rem",
                 borderRadius: "0.6rem",
                 fontWeight: "600",
-              }}>
-              Sign up as {selectedRole}
+              }}
+            >
+              Sign Up
             </Button>
-            <div className="text-center mt-4">
+
+            {/* Login Link */}
+            <div className="text-center">
               <span className="text-sm text-gray-600">
                 Already have an account?{" "}
                 <Link
                   to="/auth/login"
-                  className="text-blue-600 hover:underline font-bold">
+                  className="text-blue-600 hover:underline font-bold"
+                >
                   Login here
                 </Link>
               </span>

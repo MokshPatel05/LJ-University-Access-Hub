@@ -1,15 +1,35 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import "./index.css";
 import LoginForm from "./components/loginForm";
 import SignupForm from "./components/SignupForm";
+import Home from "./components/Home";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+// Layout component to conditionally render Navbar and Footer
+function AppLayout() {
+  const location = useLocation();
+  const isAuthPage = location.pathname === "/auth/login" || location.pathname === "/auth/signup";
+
+  return (
+    <>
+      {!isAuthPage && <Navbar />}
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth/login" element={<LoginForm />} />
+        <Route path="/auth/signup" element={<SignupForm />} />
+      </Routes>
+      {!isAuthPage && <Footer />}
+    </>
+  );
+}
 
 createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
-    <Routes>
-      <Route path="/auth/login" element={<LoginForm />} />
-      <Route path="/auth/signup" element={<SignupForm />} />
-    </Routes>
-  </BrowserRouter>
+  <StrictMode>
+    <BrowserRouter>
+      <AppLayout />
+    </BrowserRouter>
+  </StrictMode>
 );

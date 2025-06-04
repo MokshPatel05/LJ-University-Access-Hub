@@ -69,7 +69,7 @@ function LoginForm() {
 
       {/* Right Panel */}
       <div className="w-3/5 bg-blue-50 flex items-center justify-center">
-        <div className="p-10 bg-white rounded-xl shadow-lg w-full max-w-lg flex flex-col items-center justify-center">
+        <div className="p-10 bg-white rounded-xl shadow-lg w-full max-w-xl flex flex-col items-center justify-center my-3">
           <img
             src="/logo.jpeg"
             alt="LJ University logo"
