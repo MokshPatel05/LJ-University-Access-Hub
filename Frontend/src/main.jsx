@@ -5,7 +5,7 @@ import "./index.css";
 import LoginForm from "./components/loginForm";
 import SignupForm from "./components/SignupForm";
 import Home from "./components/Home";
-import Navbar from "./components/Navbar";
+import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
 
 // Layout component to conditionally render Navbar and Footer

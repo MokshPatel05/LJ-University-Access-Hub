@@ -214,7 +214,7 @@ function LoginForm() {
               </Button>
             </form>
           )}
-          <div className="text-center mt-4">
+          {/* <div className="text-center mt-4">
             <span className="text-sm text-gray-600">
               Don't have an account?{" "}
               <Link
@@ -223,7 +223,7 @@ function LoginForm() {
                 Sign up here
               </Link>
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
