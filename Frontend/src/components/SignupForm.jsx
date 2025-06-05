@@ -29,7 +29,16 @@ function SignupForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!firstName || !lastName || !email || !password || !confirmPassword || !year || !semester || !department) {
+    if (
+      !firstName ||
+      !lastName ||
+      !email ||
+      !password ||
+      !confirmPassword ||
+      !year ||
+      !semester ||
+      !department
+    ) {
       alert("Please fill in all required fields!");
       return;
     }
@@ -84,8 +93,7 @@ function SignupForm() {
       {/* Left Panel */}
       <div
         className="w-2/5 flex flex-col items-center justify-center p-6 rounded-r-2xl"
-        style={{ backgroundColor: "#025A9E" }}
-      >
+        style={{ backgroundColor: "#025A9E" }}>
         <div className="text-white text-4xl font-bold">
           Welcome to LJ University <br /> Access Hub
         </div>
@@ -95,14 +103,15 @@ function SignupForm() {
           <br />
           course management, and administrative tools.
         </div>
+        {/* Line break inserted here */}
         <div className="h-10" />
-        <div className="text-3xl font-bold" style={{ color: "#FFDB47" }}>
-          10k+   500+   300+
+
+        <div className=" text-3xl font-bold" style={{ color: "#FFDB47" }}>
+          10k+ &nbsp; 500+ &nbsp; 300+
         </div>
         <div
           className="flex justify-center gap-12 text-white text-sm"
-          style={{ fontFamily: "-moz-initial" }}
-        >
+          style={{ fontFamily: "-moz-initial" }}>
           <span>Students</span>
           <span>Faculty</span>
           <span>Courses</span>
@@ -141,8 +150,7 @@ function SignupForm() {
                   borderRadius: "0.5rem",
                   padding: "1rem",
                 }}
-                onClick={() => handleRoleChange("admin")}
-              >
+                onClick={() => handleRoleChange("admin")}>
                 <CardContent className="flex flex-col items-center justify-center text-center">
                   <FontAwesomeIcon
                     icon={faUserShield}
@@ -227,7 +235,7 @@ function SignupForm() {
             <div className="font-bold text-lg mb-2">Academic Details</div>
             <div className="flex flex-row justify-between gap-4 mb-4">
               <div className="w-1/3">
-                <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 130 }}>
                   <InputLabel id="year-select-label">Academic Year</InputLabel>
                   <Select
                     labelId="year-select-label"
@@ -235,8 +243,7 @@ function SignupForm() {
                     value={year}
                     onChange={handleYearChange}
                     label="Academic Year"
-                    required
-                  >
+                    required>
                     <MenuItem value="">
                       <em>None</em>
                     </MenuItem>
@@ -257,8 +264,7 @@ function SignupForm() {
                     onChange={handleSemesterChange}
                     label="Semester"
                     disabled={!year}
-                    required
-                  >
+                    required>
                     <MenuItem value="">
                       <em>None</em>
                     </MenuItem>
@@ -272,8 +278,10 @@ function SignupForm() {
                 </FormControl>
               </div>
               <div className="w-1/3">
-                <FormControl variant="standard" sx={{ m: 1, minWidth: 100 }}>
-                  <InputLabel id="department-select-label">Department</InputLabel>
+                <FormControl variant="standard" sx={{ m: 1, minWidth: 110 }}>
+                  <InputLabel id="department-select-label">
+                    Department
+                  </InputLabel>
                   <Select
                     labelId="department-select-label"
                     id="department-select"
@@ -281,8 +289,7 @@ function SignupForm() {
                     onChange={handleDepartmentChange}
                     label="Department"
                     disabled={!year}
-                    required
-                  >
+                    required>
                     <MenuItem value="">
                       <em>None</em>
                     </MenuItem>
@@ -302,8 +309,7 @@ function SignupForm() {
               <a
                 href="#"
                 className="text-blue-600 text-sm hover:underline"
-                style={{ color: "#0270C2", fontWeight: "400" }}
-              >
+                style={{ color: "#0270C2", fontWeight: "400" }}>
                 Forgot password?
               </a>
             </div>
@@ -320,8 +326,7 @@ function SignupForm() {
                 padding: "0.6rem",
                 borderRadius: "0.6rem",
                 fontWeight: "600",
-              }}
-            >
+              }}>
               Sign Up
             </Button>
 
@@ -331,8 +336,7 @@ function SignupForm() {
                 Already have an account?{" "}
                 <Link
                   to="/auth/login"
-                  className="text-blue-600 hover:underline font-bold"
-                >
+                  className="text-blue-600 hover:underline font-bold">
                   Login here
                 </Link>
               </span>
