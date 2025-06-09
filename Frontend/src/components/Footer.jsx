@@ -9,7 +9,7 @@ function Footer() {
           <div>
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <img src="logo.jpeg" alt="" />
+                <img src="/logo.jpeg" alt="" />
               </div>
               <span className="font-bold text-gray-900">LJ University Access Hub</span>
             </div>

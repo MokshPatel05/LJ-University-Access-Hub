@@ -7,7 +7,7 @@ import SignupForm from "./components/SignupForm";
 import Home from "./components/Home";
 import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
-
+import Dashboard from "./components/Dashboard";
 // Layout component to conditionally render Navbar and Footer
 function AppLayout() {
   const location = useLocation();
@@ -20,6 +20,8 @@ function AppLayout() {
         <Route path="/" element={<Home />} />
         <Route path="/auth/login" element={<LoginForm />} />
         <Route path="/auth/signup" element={<SignupForm />} />
+        <Route path="/dashboard/:id" element={<Dashboard />} />
+
       </Routes>
       {!isAuthPage && <Footer />}
     </>
