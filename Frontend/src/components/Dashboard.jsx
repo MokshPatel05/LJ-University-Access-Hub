@@ -3,7 +3,6 @@ import React from "react";
 function Dashboard() {
   return (
     <>
-      {/* ignore this code start building after this commented code.
       <div
         className="min-h-screen w-full px-50 pt-4"
         style={{ backgroundColor: "#E7EEFF" }}>
@@ -23,7 +22,7 @@ function Dashboard() {
             </span>
           </div>
         </div>
-      </div> */}
+      </div>
     </>
   );
 }
