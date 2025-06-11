@@ -8,6 +8,7 @@ import LandingPage from "./components/LandingPage";
 import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
 import TeacherDash from "./components/teacher/TeacherDash";
+import TeacherSchedule from "./components/teacher/Schedule";
 import AdminDash from "./components/admin/AdminDash";
 import DailySchedule from "./components/admin/DailySchedule";
 import TeacherManagement from "./components/admin/TeacherManagement";
@@ -33,6 +34,7 @@ function AppLayout() {
 
         {/* Teacher Routes */}
         <Route path="/teachDash/:id" element={<TeacherDash />} />
+        <Route path="/teachDash/:id/schedule" element={<TeacherSchedule />} />
 
         {/* Admin Routes */}
         <Route path="/adminDash/:id" element={<AdminDash />} />
