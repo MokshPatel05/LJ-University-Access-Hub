@@ -4,7 +4,7 @@ import { Outlet } from "react-router-dom";
 
 function AdminDash() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen mt-16">
       {/* Sidebar */}
       <div className="w-1/6">
         <Sidebar />
