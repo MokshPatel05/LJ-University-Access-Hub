@@ -4,13 +4,10 @@ import {
   Calendar,
   Library,
   CreditCard,
-  Clock,
-  Bell,
-  ChevronRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-function Home() {
+function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
 
@@ -246,4 +243,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default LandingPage;
