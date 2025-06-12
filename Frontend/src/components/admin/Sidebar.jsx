@@ -13,7 +13,7 @@ const Sidebar = () => {
       <div className="p-4 flex flex-col space-y-1">
         <div>
           <Link
-            to={`/adminDash/${id}`}
+            to="/adminDash/:id"
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-brands fa-squarespace fa-lg pr-2"></i>
@@ -22,7 +22,7 @@ const Sidebar = () => {
         </div>
         <div>
           <Link
-            to={`/adminDash/${id}/daily-schedule`}
+            to="/adminDash/:id/daily-schedule"
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-regular fa-calendar fa-lg pr-2"></i>
@@ -31,7 +31,7 @@ const Sidebar = () => {
         </div>
         <div>
           <Link
-            to={`/adminDash/${id}/teacher-management`}
+            to="/adminDash/:id/teacher-management"
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-solid fa-users fa-lg pr-2"></i>
@@ -40,7 +40,7 @@ const Sidebar = () => {
         </div>
         <div>
           <Link
-            to={`/adminDash/${id}/attendance/download`}
+            to="/adminDash/:id/attendance/download"
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-solid fa-download fa-lg pr-2"></i>
@@ -49,7 +49,7 @@ const Sidebar = () => {
         </div>
         <div>
           <Link
-            to={`/adminDash/${id}/batch-management`}
+            to="/adminDash/:id/batch-management"
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-solid fa-graduation-cap fa-lg pr-2"></i>

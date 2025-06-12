@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 
 function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 mt-16">
 
       {/* Hero Section */}
       <section className="bg-white h-100">
