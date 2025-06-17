@@ -20,7 +20,7 @@ export const menuItems = [
           strokeWidth={2}
           d="M8 5a2 2 0 012-2h4a2 2 0 012 2v4H8V5z"
         />
-      </svg>
+      </svg> 
     ),
   },
   {

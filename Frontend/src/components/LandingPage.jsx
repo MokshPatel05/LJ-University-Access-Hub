@@ -1,32 +1,32 @@
 import React from "react";
-import {
-  BookOpen,
-  Calendar,
-  Library,
-  CreditCard,
-} from "lucide-react";
+import { BookOpen, Calendar, Library, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
 
 function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 mt-16">
-
       {/* Hero Section */}
       <section className="bg-white h-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center">
-            <h2 className="text-4xl text-gray-900 mb-4" style={{fontWeight:"bolder"}}>
+            <h2
+              className="text-4xl text-gray-900 mb-4"
+              style={{ fontWeight: "bolder" }}>
               Welcome to LJ University Access Hub
             </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto font-semibold" >
-             Our centralized platform for managing attendance efficiently. Track, monitor, and access all attendance records and reports with ease.
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto font-semibold">
+              Our centralized platform for managing attendance efficiently.
+              Track, monitor, and access all attendance records and reports with
+              ease.
             </p>
 
             <div className="flex justify-center">
               <Link to="/auth/login">
-              <button className="inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-8 py-3 text-lg " style={{borderRadius:"0.5rem"}}>
-                Get Started
-              </button>
+                <button
+                  className="inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-8 py-3 text-lg "
+                  style={{ borderRadius: "0.5rem" }}>
+                  Get Started
+                </button>
               </Link>
             </div>
           </div>
@@ -37,7 +37,9 @@ function LandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 my-10">
         <div className="mb-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Services</h3>
-          <p className="text-gray-600">Access your most used university services</p>
+          <p className="text-gray-600">
+            Access your most used university services
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -95,7 +97,9 @@ function LandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-16">
         <div className="mb-8">
           <h3 className="text-2xl font-bold text-gray-900 mb-2">Events</h3>
-          <p className="text-gray-600">Stay updated with campus events and activities</p>
+          <p className="text-gray-600">
+            Stay updated with campus events and activities
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -111,7 +115,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Career
               </span>
-              <h4 className="font-semibold text-lg mb-2">Annual Career Fair 2024</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Annual Career Fair 2024
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Connect with top employers and explore career opportunities
               </p>
@@ -134,7 +140,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Academic
               </span>
-              <h4 className="font-semibold text-lg mb-2">Tech Innovation Symposium</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Tech Innovation Symposium
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Explore the latest in technology and innovation
               </p>
@@ -157,7 +165,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Cultural
               </span>
-              <h4 className="font-semibold text-lg mb-2">Spring Cultural Festival</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Spring Cultural Festival
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Celebrate diversity with music, food, and performances
               </p>
@@ -180,7 +190,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Sports
               </span>
-              <h4 className="font-semibold text-lg mb-2">Inter-College Sports Meet</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Inter-College Sports Meet
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Compete in various sports and showcase your talents
               </p>
@@ -203,7 +215,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Research
               </span>
-              <h4 className="font-semibold text-lg mb-2">Student Research Conference</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Student Research Conference
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Present your research and learn from peers
               </p>
@@ -226,7 +240,9 @@ function LandingPage() {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-2">
                 Networking
               </span>
-              <h4 className="font-semibold text-lg mb-2">Alumni Networking Event</h4>
+              <h4 className="font-semibold text-lg mb-2">
+                Alumni Networking Event
+              </h4>
               <p className="text-sm text-gray-600 mb-3">
                 Connect with successful alumni and build your network
               </p>
@@ -238,7 +254,6 @@ function LandingPage() {
           </div>
         </div>
       </section>
-
     </div>
   );
 }

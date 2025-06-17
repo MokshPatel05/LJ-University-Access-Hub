@@ -72,9 +72,6 @@ const Schedule = () => {
                         >
                           <div className="flex items-center justify-between mb-2">
                             <h3 className="font-semibold text-gray-900">{classItem.subject}</h3>
-                            <button className="px-3 py-1 text-xs border border-blue-300 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors">
-                              Mark Attendance
-                            </button>
                           </div>
                           <div className="space-y-1 text-sm text-gray-600">
                             <div className="flex items-center space-x-2">
