@@ -88,36 +88,6 @@ const AdminDash = () => {
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
               <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-200">
                 <h3 className="text-2xl font-semibold leading-none tracking-tight">
-                  Recent Activities
-                </h3>
-              </div>
-              <div className="p-6 pt-0">
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600">
-                      New teacher account created for Prof. Smith
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600">
-                      Schedule updated for CS Batch A
-                    </span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                    <span className="text-sm text-gray-600">
-                      Attendance report downloaded
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-              <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-200">
-                <h3 className="text-2xl font-semibold leading-none tracking-tight">
                   Quick Actions
                 </h3>
               </div>
@@ -129,7 +99,7 @@ const AdminDash = () => {
                       Create Schedule
                     </span>
                   </button>
-                  <button className="p-4 bg-green-50зв hover:bg-green-100 rounded-lg transition-colors">
+                  <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                     <Users className="h-6 w-6 text-green-600 mx-auto mb-2" />
                     <span className="text-sm font-medium text-green-700">
                       Add Teacher

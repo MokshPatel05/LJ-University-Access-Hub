@@ -72,27 +72,6 @@ function BatchManagement() {
 
       {/* Main content */}
       <div className="ml-64 w-full">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900">College Attendance System</h1>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white">
-                  <Bell className="w-4 h-4" />
-                </div>
-                <span className="absolute -top-1 -right-1 bg-white text-red-500 rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">1</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-                  A
-                </div>
-                <span className="text-sm text-gray-700">Admin User</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Content */}
         <div className="p-6 bg-gray-50 min-h-screen">
           <div className="flex items-center justify-between mb-6">
