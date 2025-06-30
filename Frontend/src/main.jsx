@@ -9,18 +9,20 @@ import Navbar from "./components/navbar";
 import Footer from "./components/Footer";
 import TeacherDash from "./components/teacher/TeacherDash";
 import TeacherSchedule from "./components/teacher/Schedule";
+import Attendance from "./components/teacher/Attendance";
 import AdminDash from "./components/admin/AdminDash";
 import DailySchedule from "./components/admin/DailySchedule";
 import TeacherManagement from "./components/admin/TeacherManagement";
 import AttendanceDownload from "./components/admin/AttendanceDownload";
 import BatchManagement from "./components/admin/BatchManagement";
 import PageNotFund from "./components/PageNotFound";
+import ResetPassword from "./components/ReserPassword";
 
 // Layout component to conditionally render Navbar and Footer
 function AppLayout() {
   const location = useLocation();
   const isAuthPage =
-    location.pathname === "/auth/login" || location.pathname === "/auth/signup";
+    location.pathname === "/auth/login" || location.pathname === "/reset-password";
 
   return (
     <>
@@ -35,6 +37,7 @@ function AppLayout() {
         {/* Teacher Routes */}
         <Route path="/teachDash/:id" element={<TeacherDash />} />
         <Route path="/teachDash/:id/schedule" element={<TeacherSchedule />} />
+        <Route path="/teachDash/:id/attendance" element={<Attendance />} />
 
         {/* Admin Routes */}
         <Route path="/adminDash/:id" element={<AdminDash />} />
@@ -54,6 +57,9 @@ function AppLayout() {
           path="/adminDash/:id/batch-management"
           element={<BatchManagement />}
         />
+
+        {/* Reset Password */}
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<PageNotFund />} />
       </Routes>
       {!isAuthPage && <Footer />}

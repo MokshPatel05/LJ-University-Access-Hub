@@ -50,6 +50,16 @@ const Sidebar = () => {
             Daily Schedule
           </Link>
         </div>
+        <div>
+          <Link
+            to={`/teachDash/${id}/attendance`}
+            className={linkClasses(`/teachDash/${id}/attendance`)}
+            style={{ color: "rgb(75,85,99)" }}
+          >
+            <i class="fa-regular fa-circle-check fa-lg pr-2"></i>
+            Mark Attendance
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -497,13 +497,7 @@ const TeacherDash = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex w-full">
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        sidebarCollapsed={sidebarCollapsed}
-        setSidebarCollapsed={setSidebarCollapsed}
-      />
-
+      <Sidebar/>
       <div
         className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-16" : "ml-64"}`}
       >
