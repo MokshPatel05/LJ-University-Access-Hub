@@ -1,69 +1,161 @@
-import { useState } from "react";
-import { Plus, Edit, Trash2, User, Phone, Search } from "lucide-react";
-import Sidebar from "./Sidebar"; // Adjust path based on your project structure
+import { useEffect, useState } from "react";
+import { Plus, Edit, Trash2, Search } from "lucide-react";
+import Sidebar from "./Sidebar";
+import axios from "../../axios";
 
 const TeacherManager = () => {
-  const [teachers, setTeachers] = useState([
-    {
-      id: "1",
-      name: "Prof. Johnson",
-      idName: "PROF001",
-      phone: "+1 234 567 8901",
-      department: "Computer Science",
-      subjects: ["Mathematics", "Statistics"],
-    },
-    {
-      id: "2",
-      name: "Dr. Smith",
-      idName: "PROF002",
-      phone: "+1 234 567 8902",
-      department: "Information Technology",
-      subjects: ["Calculus", "Algebra"],
-    },
-  ]);
-
+  const [teachers, setTeachers] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [formData, setFormData] = useState({
+    name: "",
+    ID_Name: "",
+    password: "",
+    batch: [],
+    subjects: [],
+    batchInput: "",
+    subjectInput: "",
+  });
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Filter teachers based on search term (searching by ID Name or Name)
-  const filteredTeachers = teachers.filter(
-    (teacher) =>
-      teacher.idName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      teacher.name.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetchTeachers();
+    fetchSubjects();
+  }, []);
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await axios.get("/api/teacher");
+      console.log("Fetched teachers:", res.data);
+      setTeachers(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error("Error fetching teachers:", error);
+      setTeachers([]);
+    }
+  };
+
+  const fetchSubjects = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/api/subjects");
+      console.log("Fetched subjects:", res.data);
+      setSubjects(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching subjects:", err);
+      setSubjects([]);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const adminId = localStorage.getItem("userId");
+
+    try {
+      const subjectIds = formData.subjects
+        .map((inputName) => {
+          return subjects.find(
+            (s) =>
+              s.name?.toLowerCase().trim() === inputName.toLowerCase().trim()
+          )?._id;
+        })
+        .filter(Boolean);
+
+      const invalidSubjects = formData.subjects.filter(
+        (inputName) =>
+          !subjects.some(
+            (s) =>
+              s.name.toLowerCase().trim() === inputName.toLowerCase().trim()
+          )
+      );
+
+      if (invalidSubjects.length > 0) {
+        alert("❌ Invalid subject(s): " + invalidSubjects.join(", "));
+        return;
+      }
+
+      const payload = {
+        ...formData,
+        subjects: subjectIds,
+        password: formData.password || "default123",
+        adminId,
+      };
+
+      if (editingId) {
+        delete payload.password;
+        await axios.put(`/api/teacher/${editingId}`, payload);
+      } else {
+        await axios.post("/api/teacher", payload);
+      }
+
+      fetchTeachers();
+      setIsAddTeacherOpen(false);
+      setFormData({
+        name: "",
+        ID_Name: "",
+        password: "",
+        batch: [],
+        subjects: [],
+        batchInput: "",
+        subjectInput: "",
+      });
+      setEditingId(null);
+      alert("✅ Teacher successfully saved");
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data ||
+        error.message ||
+        "Unknown error";
+      alert("❌ Failed to add/update teacher: " + errorMessage);
+    }
+  };
+
+  const handleDelete = async (id, name) => {
+    const confirmed = window.confirm(
+      `🗑️ Are you sure you want to delete teacher "${name}"?`
+    );
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`/api/teacher/${id}`);
+      fetchTeachers();
+      alert(`✅ "${name}" was deleted successfully.`);
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("❌ Failed to delete teacher.");
+    }
+  };
+
+  const handleEdit = (teacher) => {
+    setIsAddTeacherOpen(true);
+    setEditingId(teacher._id);
+    setFormData({
+      name: teacher.name || "",
+      ID_Name: teacher.ID_Name || "",
+      password: "",
+      batch: Array.isArray(teacher.batch) ? teacher.batch : [],
+      subjects: Array.isArray(teacher.subjects)
+        ? teacher.subjects.map((s) => (typeof s === "string" ? s : s._id))
+        : [],
+      batchInput: (teacher.batch || []).join(", "),
+      subjectInput: (teacher.subjects || [])
+        .map((s) => (typeof s === "object" && s.name ? s.name : ""))
+        .join(", "),
+    });
+  };
+
+  const filteredTeachers = (teachers || []).filter(
+    (t) =>
+      t.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.ID_Name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  const handleCreateTeacher = (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const newTeacher = {
-      id: Date.now().toString(),
-      name: formData.get("name"),
-      idName: formData.get("idName"),
-      phone: formData.get("phone"),
-      department: formData.get("department"),
-      subjects: formData
-        .get("subjects")
-        .split(",")
-        .map((s) => s.trim())
-        .filter((s) => s), // Filter out empty strings
-    };
-    setTeachers([...teachers, newTeacher]);
-    setIsAddTeacherOpen(false);
-    event.target.reset();
-  };
-
-  const deleteTeacher = (id) => {
-    setTeachers(teachers.filter((teacher) => teacher.id !== id));
-  };
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
       <div className="w-64 flex-shrink-0 bg-gray-50">
         <Sidebar />
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 p-6 mt-16">
         <div className="flex justify-between items-center">
           <div>
@@ -75,14 +167,26 @@ const TeacherManager = () => {
             </p>
           </div>
           <button
-            onClick={() => setIsAddTeacherOpen(true)}
-            className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Teacher
+            onClick={() => {
+              setIsAddTeacherOpen(true);
+              setEditingId(null);
+              setFormData({
+                name: "",
+                ID_Name: "",
+                password: "",
+                batch: [],
+                subjects: [],
+                batchInput: "",
+                subjectInput: "",
+              });
+            }}
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
+            <Plus className="w-4 h-4" />
+            <span>Add Teacher</span>
           </button>
         </div>
 
-        {/* Search Bar */}
+        {/* Search */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-6">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -96,7 +200,7 @@ const TeacherManager = () => {
           </div>
         </div>
 
-        {/* Teachers Table */}
+        {/* Table */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -107,204 +211,195 @@ const TeacherManager = () => {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     ID Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Phone
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Batches
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Department
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Subjects
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Admin
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTeachers.map((teacher) => (
-                  <tr key={teacher.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                          <User className="w-4 h-4 text-green-600" />
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">
-                          {teacher.name}
-                        </span>
-                      </div>
+                  <tr key={teacher._id}>
+                    <td className="px-6 py-4">{teacher.name}</td>
+                    <td className="px-6 py-4">{teacher.ID_Name}</td>
+                    <td className="px-6 py-4">
+                      {(teacher.batch || []).join(", ")}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded">
-                        {teacher.idName}
-                      </span>
+                    <td className="px-6 py-4">
+                      {(teacher.subjects || [])
+                        .map((s) => {
+                          if (typeof s === "object" && s?.name) return s.name;
+                          const match = subjects.find((subj) => subj._id === s);
+                          return match ? match.name : "Unknown";
+                        })
+                        .join(", ")}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">
-                          {teacher.phone}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">
-                        {teacher.department}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-wrap gap-1">
-                        {teacher.subjects.map((subject, index) => (
-                          <span
-                            key={index}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                            {subject}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex space-x-2">
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteTeacher(teacher.id)}
-                          className="p-1 text-red-400 hover:text-red-600">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <td className="px-6 py-4">{teacher.admin?.name || "-"}</td>
+                    <td className="px-6 py-4 space-x-2">
+                      {teacher.admin?._id ===
+                        localStorage.getItem("userId") && (
+                        <>
+                          <button
+                            onClick={() => handleEdit(teacher)}
+                            className="text-blue-500 hover:underline">
+                            <Edit className="inline-block w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDelete(teacher._id, teacher.name)
+                            }
+                            className="text-red-500 hover:underline">
+                            <Trash2 className="inline-block w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {filteredTeachers.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                No teachers found matching your search.
+              <div className="text-center py-6 text-gray-500">
+                No teachers found.
               </div>
             )}
           </div>
         </div>
 
-        {/* Add Teacher Modal */}
+        {/* Modal */}
         {isAddTeacherOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Add New Teacher
-                </h3>
-                <button
-                  onClick={() => setIsAddTeacherOpen(false)}
-                  className="text-gray-400 hover:text-gray-600">
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <form onSubmit={handleCreateTeacher} className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                {editingId ? "Edit Teacher" : "Add New Teacher"}
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label
-                    htmlFor="name"
-                    className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Full Name
                   </label>
                   <input
-                    id="name"
-                    name="name"
                     type="text"
-                    placeholder="Prof. John Doe"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g. Prof. John Doe"
                   />
                 </div>
+
                 <div>
-                  <label
-                    htmlFor="idName"
-                    className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     ID Name
                   </label>
                   <input
-                    id="idName"
-                    name="idName"
                     type="text"
-                    placeholder="PROF001"
+                    value={formData.ID_Name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, ID_Name: e.target.value })
+                    }
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    placeholder="e.g. PROF001"
                   />
                 </div>
+
+                {!editingId && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      placeholder="Set password"
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <label
-                    htmlFor="phone"
-                    className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Batches (comma separated)
                   </label>
                   <input
-                    id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="+1 234 567 8900"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="department"
-                    className="block text-sm font-medium text-gray-700 mb-1">
-                    Department
-                  </label>
-                  <input
-                    id="department"
-                    name="department"
                     type="text"
-                    placeholder="Computer Science"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    name="batchInput"
+                    value={formData.batchInput || ""}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        batchInput: inputValue,
+                        batch: inputValue
+                          .split(",")
+                          .map((b) => b.trim())
+                          .filter((b) => b),
+                      }));
+                    }}
+                    placeholder="e.g. B1, B2"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
+
                 <div>
-                  <label
-                    htmlFor="subjects"
-                    className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Subjects (comma separated)
                   </label>
                   <input
-                    id="subjects"
-                    name="subjects"
                     type="text"
-                    placeholder="Mathematics, Statistics"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    name="subjectInput"
+                    value={formData.subjectInput || ""}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        subjectInput: inputValue,
+                        subjects: inputValue
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter((s) => s),
+                      }));
+                    }}
+                    placeholder="e.g. Data Structures, DBMS"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-                <div className="flex space-x-3 pt-4">
+
+                <div className="flex space-x-2 pt-4">
                   <button
                     type="button"
-                    onClick={() => setIsAddTeacherOpen(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                    onClick={() => {
+                      setIsAddTeacherOpen(false);
+                      setEditingId(null);
+                    }}
+                    className="flex-1 px-4 py-2 border text-gray-600 rounded-md">
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                    Add Teacher
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">
+                    {editingId ? "Update" : "Add"}
                   </button>
                 </div>
               </form>

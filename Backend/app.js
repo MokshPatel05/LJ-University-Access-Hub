@@ -7,6 +7,8 @@ const port = 8080;
 const Teacher = require("./models/teacherSchema");
 const Admin = require("./models/adminSchema");
 const batchRoutes = require("./routes/batch");
+const teacherRoutes = require("./routes/teacher");
+const subjectRoutes = require("./routes/subject");
 
 const path = require("path");
 const methodOverride = require("method-override");
@@ -27,8 +29,9 @@ app.use(
 );
 app.use(express.json());
 app.use("/auth", require("./routes/auth"));
-app.use("/api/batches", batchRoutes); 
-app.use("/api/teachers", require("./routes/teacher"));
+app.use("/api/batches", batchRoutes);
+app.use("/api/teacher", teacherRoutes);
+app.use("/api/subjects", subjectRoutes); 
 
 // MongoDB connection
 const dburl = process.env.MONGO_URL;

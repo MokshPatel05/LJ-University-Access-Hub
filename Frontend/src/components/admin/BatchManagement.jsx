@@ -153,6 +153,12 @@ function BatchManagement() {
               .filter((batch) =>
                 batch.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
               )
+              .sort((a, b) => {
+                // Extract the numeric part after 'B' and compare as numbers
+                const aNum = parseInt(a.name.replace(/[^\d]/g, ""), 10);
+                const bNum = parseInt(b.name.replace(/[^\d]/g, ""), 10);
+                return aNum - bNum;
+              })
               .map((batch) => (
                 <div
                   key={batch._id}
