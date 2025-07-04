@@ -1,7 +1,9 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { useEffect } from "react"; // ✅ keep this — you're using it inside AppLayout
 import "./index.css";
+
 import LoginForm from "./components/auth/LoginForm";
 import SignupForm from "./components/auth/SignupForm";
 import LandingPage from "./components/LandingPage";
@@ -16,13 +18,29 @@ import TeacherManagement from "./components/admin/TeacherManagement";
 import AttendanceDownload from "./components/admin/AttendanceDownload";
 import BatchManagement from "./components/admin/BatchManagement";
 import PageNotFund from "./components/PageNotFound";
-import ResetPassword from "./components/ReserPassword";
+import ResetPassword from "./components/ResetPassword";
+import ProtectedRoute from "./routes/ProtectedRoute";
 
-// Layout component to conditionally render Navbar and Footer
 function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate(); // ✅ safer than window.location.href
+
   const isAuthPage =
     location.pathname === "/auth/login" || location.pathname === "/reset-password";
+
+  useEffect(() => {
+    const lastLogin = localStorage.getItem("lastLoginTime");
+    const twoWeeksInMs = 14 * 24 * 60 * 60 * 1000;
+
+    if (lastLogin && Date.now() - parseInt(lastLogin) > twoWeeksInMs) {
+      // Clear auth-related data and force logout
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("userPassword");
+      localStorage.removeItem("lastLoginTime");
+      navigate("/auth/login"); // ✅ smoother redirect
+    }
+  }, [navigate]);
 
   return (
     <>
@@ -32,30 +50,73 @@ function AppLayout() {
 
         {/* Auth Routes */}
         <Route path="/auth/login" element={<LoginForm />} />
-        {/* <Route path="/auth/signup" element={<SignupForm />} /> */}
 
         {/* Teacher Routes */}
-        <Route path="/teachDash/:id" element={<TeacherDash />} />
-        <Route path="/teachDash/:id/schedule" element={<TeacherSchedule />} />
-        <Route path="/teachDash/:id/attendance" element={<Attendance />} />
+        <Route
+          path="/teachDash/:id"
+          element={
+            <ProtectedRoute allowedRole="teacher">
+              <TeacherDash />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teachDash/:id/schedule"
+          element={
+            <ProtectedRoute allowedRole="teacher">
+              <TeacherSchedule />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/teachDash/:id/attendance"
+          element={
+            <ProtectedRoute allowedRole="teacher">
+              <Attendance />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
-        <Route path="/adminDash/:id" element={<AdminDash />} />
+        <Route
+          path="/adminDash/:id"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AdminDash />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/adminDash/:id/daily-schedule"
-          element={<DailySchedule />}
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <DailySchedule />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/adminDash/:id/teacher-management"
-          element={<TeacherManagement />}
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <TeacherManagement />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/adminDash/:id/attendance/download"
-          element={<AttendanceDownload />}
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <AttendanceDownload />
+            </ProtectedRoute>
+          }
         />
         <Route
           path="/adminDash/:id/batch-management"
-          element={<BatchManagement />}
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <BatchManagement />
+            </ProtectedRoute>
+          }
         />
 
         {/* Reset Password */}

@@ -1,5 +1,5 @@
 import { React, useState } from "react";
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
@@ -14,6 +14,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 function LoginForm() {
+  const navigate = useNavigate(); // inside your component
+
   //for backend
   const [selectedRole, setSelectedRole] = useState(null); // Track selected role (teacher/admin)
   const [teacherId, setTeacherId] = useState("");
@@ -24,12 +26,41 @@ function LoginForm() {
     setSelectedRole(role);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (selectedRole === "teacher") {
-      console.log("Teacher Login:", { teacherId, password });
-    } else if (selectedRole === "admin") {
-      console.log("Admin Login:", { adminId, password });
+
+    const loginData =
+      selectedRole === "admin"
+        ? { userType: "admin", username: adminId, password }
+        : { userType: "teacher", username: teacherId, password };
+
+    try {
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(loginData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert("Login failed: " + (data.message || response.statusText));
+      } else {
+        localStorage.setItem("userId", data.userId); // Save user ID for later use
+        localStorage.setItem("userRole", data.userType); // Save User role for use in another files too.
+        localStorage.setItem("userName", data.userName); // 👈 store actual name
+        localStorage.setItem("userPassword", loginData.password); // 👈 insecure, only for testing
+        localStorage.setItem("loginTime", Date.now().toString()); //for auto-logout functionailty
+
+        // ✅ Redirect to the dashboard using path from backend
+        navigate(data.dashboardPath);
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred during login");
     }
   };
 
@@ -92,30 +123,6 @@ function LoginForm() {
           {/* Role Selection Cards */}
           <div className="flex gap-4 mb-6 ">
             <Card
-              onClick={() => handleRoleSelect("teacher")}
-              className={`cursor-pointer ${
-                selectedRole === "teacher"
-                  ? "border-4 border-blue-500"
-                  : "border border-gray-200"
-              }`}
-              sx={{ maxWidth: 200, borderRadius: "0.5rem", padding: "1rem" }}>
-              <CardContent className="flex flex-col items-center justify-center text-center">
-                <FontAwesomeIcon
-                  icon={faChalkboardTeacher}
-                  className="text-green-500 text-4xl mb-2 "
-                />
-                <Typography variant="h6">Teacher</Typography>
-
-                {/* added space */}
-                <div className="h-4" />
-
-                <Typography variant="body2" color="textSecondary">
-                  Manage attendance and students <br /> grades
-                </Typography>
-              </CardContent>
-            </Card>
-
-            <Card
               onClick={() => handleRoleSelect("admin")}
               className={`cursor-pointer ${
                 selectedRole === "admin"
@@ -136,6 +143,29 @@ function LoginForm() {
                 <Typography variant="body2" color="textSecondary">
                   System <br />
                   configuration and management
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card
+              onClick={() => handleRoleSelect("teacher")}
+              className={`cursor-pointer ${
+                selectedRole === "teacher"
+                  ? "border-4 border-blue-500"
+                  : "border border-gray-200"
+              }`}
+              sx={{ maxWidth: 200, borderRadius: "0.5rem", padding: "1rem" }}>
+              <CardContent className="flex flex-col items-center justify-center text-center">
+                <FontAwesomeIcon
+                  icon={faChalkboardTeacher}
+                  className="text-green-500 text-4xl mb-2 "
+                />
+                <Typography variant="h6">Teacher</Typography>
+
+                {/* added space */}
+                <div className="h-4" />
+
+                <Typography variant="body2" color="textSecondary">
+                  Manage attendance and students <br /> grades
                 </Typography>
               </CardContent>
             </Card>

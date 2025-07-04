@@ -47,7 +47,7 @@ const Sidebar = () => {
             style={{ color: "rgb(75,85,99)" }}
           >
             <i className="fa-regular fa-calendar fa-lg pr-2"></i>
-            Daily Schedule
+            Weekly Schedule
           </Link>
         </div>
         <div>

@@ -3,9 +3,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        universityBlue: '#025A9E',
+        universityBlue: "#025A9E",
       },
     },
   },
-  plugins: [],
-}
+  plugins: [require("tailwind-scrollbar-hide")],
+};

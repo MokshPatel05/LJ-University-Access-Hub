@@ -1,10 +1,14 @@
 import React from "react";
 import { BookOpen, Calendar, Library, CreditCard } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function LandingPage() {
+  const navigate = useNavigate();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 mt-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 scrollbar-hide mt-16">
       {/* Hero Section */}
       <section className="bg-white h-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -21,13 +25,23 @@ function LandingPage() {
             </p>
 
             <div className="flex justify-center">
-              <Link to="/auth/login">
-                <button
-                  className="inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-8 py-3 text-lg "
-                  style={{ borderRadius: "0.5rem" }}>
-                  Get Started
-                </button>
-              </Link>
+              <button
+                onClick={() => {
+                  const userId = localStorage.getItem("userId");
+                  const role = localStorage.getItem("userRole");
+
+                  if (userId && role === "admin") {
+                    navigate(`/adminDash/${userId}`);
+                  } else if (userId && role === "teacher") {
+                    navigate(`/teachDash/${userId}`);
+                  } else {
+                    navigate("/auth/login");
+                  }
+                }}
+                className="inline-flex items-center justify-center font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 px-8 py-3 text-lg"
+                style={{ borderRadius: "0.5rem" }}>
+                Get Started
+              </button>
             </div>
           </div>
         </div>

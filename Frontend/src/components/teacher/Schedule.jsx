@@ -25,7 +25,7 @@ const weeklySchedule = {
 
 const Schedule = () => {
   const { id } = useParams();
-
+  
   return (
     <div className="min-h-screen bg-gray-50 flex w-full">
       <Sidebar />
