@@ -1,842 +1,933 @@
-"use client"
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import Sidebar from "./Sidebar";
 
-import { useState, useRef, useEffect } from "react";
-import Sidebar from "./Sidebar"
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
+// Hardcoded time slots and rooms
+const timeSlots = [
+  { id: "1", time: "8:45 AM - 9:45 AM", label: "1st Lecture" },
+  { id: "2", time: "9:45 AM - 10:45 AM", label: "2nd Lecture" },
+  { id: "3", time: "10:45 AM - 11:30 AM", label: "Break", isBreak: true },
+  { id: "4", time: "11:30 AM - 12:30 PM", label: "3rd Lecture" },
+  { id: "5", time: "12:30 PM - 1:30 PM", label: "4th Lecture" },
+  { id: "6", time: "1:45 PM - 2:45 PM", label: "5th Lecture" },
+];
 
-export default function DailySchedule() {
-  const [timetableData, setTimetableData] = useState([
-    {
-      day: "MON",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-1" },
-            { subject: "DM", faculty: "DDP", room: "403" },
-            { subject: "TOC", faculty: "PDO", room: "404" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-3" },
-            { subject: "DM", faculty: "MSS", room: "405" },
-            { subject: "FSD-2", faculty: "NAS", room: "407" },
-            { subject: "FSD-2", faculty: "PBZ", room: "406-4" },
-            { subject: "TOC", faculty: "DPS", room: "409" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "TOC", faculty: "DPS", room: "403" },
-            { subject: "DM", faculty: "BNS", room: "404" },
-            { subject: "TOC", faculty: "PDO", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "409" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-          ],
-        },
-        {
-          time: "BREAK",
-          classes: Array(8).fill({ subject: "break", faculty: "", room: "" }),
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "TOC", faculty: "PDO", room: "403" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-1" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-3" },
-            { subject: "TOC", faculty: "DPS", room: "404" },
-            { subject: "FSD-2", faculty: "PSP", room: "407" },
-            { subject: "COA", faculty: "SSD", room: "405" },
-            { subject: "COA", faculty: "VBY", room: "409" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-4" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "COA", faculty: "VBY", room: "403" },
-            { subject: "COA", faculty: "SSD", room: "404" },
-            { subject: "DM", faculty: "FRT", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "MSS", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "403" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "VBY", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "DDP", room: "409" },
-          ],
-        },
-      ],
-    },
-    {
-      day: "TUE",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "TOC", faculty: "PDO", room: "403" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-1" },
-            { subject: "FSD-2", faculty: "PSP", room: "406-3" },
-            { subject: "TOC", faculty: "DPS", room: "404" },
-            { subject: "DM", faculty: "MSS", room: "405" },
-            { subject: "FSD-2", faculty: "NAS", room: "407" },
-            { subject: "COA", faculty: "VBY", room: "409" },
-            { subject: "FSD-2", faculty: "MJT", room: "406-4" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "DM", faculty: "MSS", room: "403" },
-            { subject: "COA", faculty: "SSD", room: "404" },
-            { subject: "COA", faculty: "VBY", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "PDO", room: "409" },
-          ],
-        },
-        {
-          time: "BREAK",
-          classes: Array(8).fill({ subject: "break", faculty: "", room: "" }),
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-1" },
-            { subject: "COA", faculty: "SSD", room: "403" },
-            { subject: "COA", faculty: "VBY", room: "404" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-3" },
-            { subject: "FSD-2", faculty: "PSP", room: "407" },
-            { subject: "TOC", faculty: "DPS", room: "405" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "406-4" },
-            { subject: "DM", faculty: "DDP", room: "409" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "DM", faculty: "DDP", room: "403" },
-            { subject: "DM", faculty: "BNS", room: "404" },
-            { subject: "DM", faculty: "FRT", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "DPS", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "COA", faculty: "VBY", room: "403" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "DDP", room: "404" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-          ],
-        },
-      ],
-    },
-    {
-      day: "WED",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "COA", faculty: "VBY", room: "403" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-1" },
-            { subject: "DM", faculty: "BNS", room: "404" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-3" },
-            { subject: "DM", faculty: "MSS", room: "405" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "407" },
-            { subject: "FSD-2", faculty: "PBZ", room: "406-4" },
-            { subject: "COA", faculty: "SSD", room: "409" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "DM", faculty: "MSS", room: "403" },
-            { subject: "COA", faculty: "VBY", room: "404" },
-            { subject: "TOC", faculty: "PDO", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "DDP", room: "409" },
-          ],
-        },
-        {
-          time: "BREAK",
-          classes: Array(8).fill({ subject: "break", faculty: "", room: "" }),
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "FSD-2", faculty: "PSP", room: "406-1" },
-            { subject: "COA", faculty: "SSD", room: "403" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-3" },
-            { subject: "DM", faculty: "DDP", room: "404" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "407" },
-            { subject: "TOC", faculty: "DPS", room: "405" },
-            { subject: "DM", faculty: "MSS", room: "409" },
-            { subject: "FSD-2", faculty: "MJT", room: "406-4" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "TOC", faculty: "DPS", room: "403" },
-            { subject: "COA", faculty: "SSD", room: "404" },
-            { subject: "DM", faculty: "FRT", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "PDO", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "PDO", room: "404" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "VBY", room: "409" },
-          ],
-        },
-      ],
-    },
-    {
-      day: "THU",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "DM", faculty: "MSS", room: "403" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-1" },
-            { subject: "COA", faculty: "VBY", room: "404" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-3" },
-            { subject: "TOC", faculty: "PDO", room: "405" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "407" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "406-4" },
-            { subject: "TOC", faculty: "DPS", room: "409" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "TOC", faculty: "PDO", room: "403" },
-            { subject: "DM", faculty: "BNS", room: "404" },
-            { subject: "COA", faculty: "VBY", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "409" },
-          ],
-        },
-        {
-          time: "BREAK",
-          classes: Array(8).fill({ subject: "break", faculty: "", room: "" }),
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-1" },
-            { subject: "TOC", faculty: "DPS", room: "403" },
-            { subject: "FSD-2", faculty: "PSP", room: "406-3" },
-            { subject: "COA", faculty: "SSD", room: "404" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "407" },
-            { subject: "DM", faculty: "FRT", room: "405" },
-            { subject: "COA", faculty: "VBY", room: "409" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-4" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "COA", faculty: "SSD", room: "403" },
-            { subject: "DM", faculty: "DDP", room: "404" },
-            { subject: "TOC", faculty: "DPS", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "PDO", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "DDP", room: "403" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "DPS", room: "404" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "405" },
-            { subject: "DM", faculty: "MSS", room: "409" },
-            { subject: "none", faculty: "", room: "" },
-          ],
-        },
-      ],
-    },
-    {
-      day: "FRI",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "DM", faculty: "MSS", room: "403" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-1" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "406-3" },
-            { subject: "TOC", faculty: "DPS", room: "404" },
-            { subject: "FSD-2", faculty: "PSP", room: "407" },
-            { subject: "COA", faculty: "SSD", room: "405" },
-            { subject: "COA", faculty: "VBY", room: "409" },
-            { subject: "FSD-2", faculty: "MJT", room: "406-4" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "COA", faculty: "VBY", room: "403" },
-            { subject: "DM", faculty: "DDP", room: "404" },
-            { subject: "DM", faculty: "FRT", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "MSS", room: "409" },
-          ],
-        },
-        {
-          time: "BREAK",
-          classes: Array(8).fill({ subject: "break", faculty: "", room: "" }),
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "FSD-2", faculty: "PSP", room: "406-1" },
-            { subject: "COA", faculty: "SSD", room: "403" },
-            { subject: "TOC", faculty: "PDO", room: "404" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-3" },
-            { subject: "COA", faculty: "VBY", room: "405" },
-            { subject: "FSD-2", faculty: "NAS", room: "407" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "406-4" },
-            { subject: "DM", faculty: "DDP", room: "409" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "DM", faculty: "DDP", room: "403" },
-            { subject: "COA", faculty: "VBY", room: "404" },
-            { subject: "TOC", faculty: "PDO", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "MSS", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "DPS", room: "409" },
-          ],
-        },
-      ],
-    },
-    {
-      day: "SAT",
-      slots: [
-        {
-          time: "08:45 to 09:45",
-          classes: [
-            { subject: "FSD-2", faculty: "PSP", room: "406-1" },
-            { subject: "DM", faculty: "DDP", room: "403" },
-            { subject: "TOC", faculty: "PDO", room: "404" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-3" },
-            { subject: "PYTHON-2", faculty: "DVP", room: "407" },
-            { subject: "TOC", faculty: "DPS", room: "405" },
-            { subject: "DM", faculty: "MSS", room: "409" },
-            { subject: "PYTHON-2", faculty: "TAT", room: "406-4" },
-          ],
-        },
-        {
-          time: "09:45 to 10:45",
-          classes: [
-            { subject: "TOC", faculty: "DPS", room: "403" },
-            { subject: "COA", faculty: "VBY", room: "404" },
-            { subject: "COA", faculty: "SSD", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "TOC", faculty: "PDO", room: "409" },
-          ],
-        },
-        {
-          time: "11:30 to 12:30",
-          classes: [
-            { subject: "TOC", faculty: "PDO", room: "403" },
-            { subject: "FSD-2", faculty: "NAS", room: "406-1" },
-            { subject: "FSD-2", faculty: "PSP", room: "406-3" },
-            { subject: "COA", faculty: "SSD", room: "404" },
-            { subject: "COA", faculty: "VBY", room: "405" },
-            { subject: "PYTHON-2", faculty: "VHA", room: "407" },
-            { subject: "FSD-2", faculty: "PBZ", room: "406-4" },
-            { subject: "DM", faculty: "DDP", room: "409" },
-          ],
-        },
-        {
-          time: "12:30 to 01:30",
-          classes: [
-            { subject: "COA", faculty: "VBY", room: "403" },
-            { subject: "DM", faculty: "DDP", room: "404" },
-            { subject: "DM", faculty: "MSS", room: "405" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "COA", faculty: "SSD", room: "409" },
-          ],
-        },
-        {
-          time: "01:45 to 02:45",
-          classes: [
-            { subject: "DM", faculty: "MSS", room: "403" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "DM", faculty: "BNS", room: "404" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-            { subject: "none", faculty: "", room: "" },
-          ],
-        },
-      ],
-    },
-  ])
+const rooms = [
+  "Room A-101",
+  "Room A-102",
+  "Room A-103",
+  "Room B-201",
+  "Room B-202",
+  "Room B-203",
+  "Lab-1",
+  "Lab-2",
+  "Lab-3",
+  "Seminar Hall-1",
+  "Seminar Hall-2",
+  "Library Hall",
+];
 
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState("")
-  const timetableRef = useRef(null)
-  const [isMounted, setIsMounted] = useState(false)
+const days = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
-  const subjects = [
-    { code: "none", name: "No Class", faculty: [] },
-    { code: "PYTHON-2", name: "Python Programming - 2", faculty: ["VHA", "TAT", "DVP"] },
-    { code: "DM", name: "Discrete Mathematics", faculty: ["DDP", "FRT", "BNS", "MSS"] },
-    { code: "TOC", name: "Theory of Computation", faculty: ["DPS", "PDO"] },
-    { code: "FSD-2", name: "Full Stack Development - 2", faculty: ["MJT", "PSP", "NAS", "PBZ"] },
-    { code: "COA", name: "Computer Organization and Architecture", faculty: ["VBY", "SSD"] },
-  ]
+const AdminSchedule = () => {
+  const [adminData, setAdminData] = useState({ div: "", year: "" });
+  const [batches, setBatches] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [teachers, setTeachers] = useState([]);
+  const [scheduleData, setScheduleData] = useState([]);
+  const [selectedDay, setSelectedDay] = useState("");
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedTeacher, setSelectedTeacher] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState("");
+  const [selectedBatch, setSelectedBatch] = useState("");
+  const [activeTab, setActiveTab] = useState("1");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const rooms = ["403", "404", "405", "406-1", "406-3", "406-4", "407", "409"]
-
-  const facultyDetails = {
-    VHA: "Prof. Vishal Acharya",
-    TAT: "Prof. Tejas Thakkar",
-    DVP: "Prof. Dhruv Prajapati",
-    DDP: "Prof. Dipali Parekh",
-    FRT: "Prof. Falshruti Thakkar",
-    BNS: "Prof. Bhargav Suthar",
-    MSS: "Prof. Meet Savani",
-    DPS: "Prof. Dhara Patel",
-    PDO: "Prof. Parul Oza",
-    MJT: "Prof. Mitesh Thakkar",
-    PSP: "Prof. Priyen Patel",
-    NAS: "Prof. Nidhi Seta",
-    PBZ: "Prof. Pravin Zinzala",
-    VBY: "Prof. Vikas Yadav",
-    SSD: "Prof. Sweta Shah",
-  }
-
-  const getSubjectColor = (subject) => {
-    const colors = {
-      "PYTHON-2": "bg-blue-100 text-blue-800 border-blue-200",
-      DM: "bg-green-100 text-green-800 border-green-200",
-      TOC: "bg-purple-100 text-purple-800 border-purple-200",
-      "FSD-2": "bg-orange-100 text-orange-800 border-orange-200",
-      COA: "bg-red-100 text-red-800 border-red-200",
-    }
-    return colors[subject] || "bg-gray-100 text-gray-800 border-gray-200"
-  }
-
-  const showToastMessage = (message) => {
-    setToastMessage(message)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
-  }
-
-  const updateClassSlot = (dayIndex, slotIndex, batchIndex, field, value) => {
-    const newTimetableData = [...timetableData]
-    newTimetableData[dayIndex].slots[slotIndex].classes[batchIndex] = {
-      ...newTimetableData[dayIndex].slots[slotIndex].classes[batchIndex],
-      [field]: value,
-    }
-
-    if (field === "subject") {
-      const selectedSubject = subjects.find((s) => s.code === value)
-      if (selectedSubject && selectedSubject.faculty.length > 0) {
-        newTimetableData[dayIndex].slots[slotIndex].classes[batchIndex].faculty = selectedSubject.faculty[0]
-      }
-      if (value === "none") {
-        newTimetableData[dayIndex].slots[slotIndex].classes[batchIndex].faculty = ""
-        newTimetableData[dayIndex].slots[slotIndex].classes[batchIndex].room = ""
-      }
-    }
-
-    setTimetableData(newTimetableData)
-  }
-
-  const handleSubmit = () => {
-    console.log("Timetable Data:", JSON.stringify(timetableData, null, 2))
-    showToastMessage("Timetable saved successfully!")
-  }
-
-  const resetTimetable = () => {
-    const resetData = timetableData.map((day) => ({
-      ...day,
-      slots: day.slots.map((slot) => ({
-        ...slot,
-        classes: slot.classes.map(() => ({ subject: "none", faculty: "", room: "" })),
-      })),
-    }))
-    setTimetableData(resetData)
-    showToastMessage("Timetable reset successfully!")
-  }
-
+  // Fetch admin data, batches, subjects, and schedule on mount
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    const fetchData = async () => {
+      try {
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+          throw new Error("No user ID found. Please log in again.");
+        }
 
-  const downloadPDF = async () => {
-    if (!isMounted) {
-      showToastMessage("Component not fully loaded. Please try again.")
-      return
+        // Fetch admin data
+        const adminResponse = await axios.get(
+          "http://localhost:8080/api/admin/me",
+          {
+            headers: { "user-id": userId },
+          }
+        );
+        const { div, year } = adminResponse.data;
+        setAdminData({ div, year });
+
+        // Fetch batches for the admin's year
+        const batchesResponse = await axios.get(
+          "http://localhost:8080/api/batches",
+          {
+            headers: { "user-id": userId },
+            params: { year },
+          }
+        );
+        setBatches(batchesResponse.data);
+
+        // Fetch subjects for the admin's year
+        const subjectsResponse = await axios.get(
+          "http://localhost:8080/api/subjects",
+          {
+            headers: { "user-id": userId },
+            params: { year },
+          }
+        );
+        setSubjects(subjectsResponse.data);
+
+        // Fetch schedule
+        await fetchSchedule(div, year);
+      } catch (err) {
+        setError(
+          err.response?.data?.message || err.message || "Failed to load data"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Fetch teachers when batch changes
+  useEffect(() => {
+    if (selectedBatch && selectedSubject && adminData.div) {
+      const fetchTeachers = async () => {
+        try {
+          const userId = localStorage.getItem("userId");
+          const response = await axios.get(
+            "http://localhost:8080/api/teachers",
+            {
+              headers: { "user-id": userId },
+              params: {
+                batch: selectedBatch,
+                subject: subjects.find((s) => s.name === selectedSubject)?._id,
+                adminDiv: adminData.div,
+              },
+            }
+          );
+          setTeachers(response.data);
+        } catch (err) {
+          setError(err.response?.data?.message || "Failed to load teachers");
+        }
+      };
+      fetchTeachers();
+    } else {
+      setTeachers([]);
+    }
+  }, [selectedBatch, selectedSubject, adminData.div]);
+
+  // Fetch schedule data
+  const fetchSchedule = async (department, year) => {
+    try {
+      const userId = localStorage.getItem("userId");
+      const response = await axios.get("http://localhost:8080/api/schedule", {
+        headers: { "user-id": userId },
+        params: { department, year },
+      });
+      setScheduleData(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to fetch schedule");
+    }
+  };
+
+  const addScheduleEntry = async () => {
+    if (
+      !selectedDay ||
+      !selectedTimeSlot ||
+      !selectedSubject ||
+      !selectedTeacher ||
+      !selectedRoom ||
+      !selectedBatch
+    ) {
+      alert("Please fill all fields before adding to schedule.");
+      return;
     }
 
-    const timetableElement = timetableRef.current
-    if (!timetableElement) {
-      showToastMessage("Timetable element not found.")
-      console.error("Timetable ref is null")
-      return
+    const userId = localStorage.getItem("userId");
+    const selectedSubjectObj = subjects.find((s) => s.name === selectedSubject);
+    const selectedTeacherObj = teachers.find((t) => t.name === selectedTeacher);
+
+    if (!selectedSubjectObj || !selectedTeacherObj) {
+      alert("Invalid subject or teacher selected.");
+      return;
     }
 
-    showToastMessage("Generating PDF...")
+    const newEntry = {
+      day: selectedDay,
+      department: adminData.div,
+      year: adminData.year,
+      batch: selectedBatch,
+      admin: userId,
+      time:
+        timeSlots.find((slot) => slot.id === selectedTimeSlot)?.time ||
+        selectedTimeSlot,
+      subject: selectedSubjectObj._id,
+      teacher: selectedTeacherObj._id,
+      room: selectedRoom,
+    };
 
     try {
-      // Add a slight delay to ensure DOM is fully rendered
-      await new Promise((resolve) => setTimeout(resolve, 100))
-
-      const canvas = await html2canvas(timetableElement, {
-        scale: 1, // Reduced scale for performance
-        useCORS: true,
-        logging: true, // Enable logging for debugging
-        windowWidth: timetableElement.scrollWidth,
-        windowHeight: timetableElement.scrollHeight,
-        scrollX: 0,
-        scrollY: 0,
-        allowTaint: true, // Allow rendering of cross-origin content
-      })
-
-      const imgData = canvas.toDataURL("image/png", 1.0)
-      if (!imgData || imgData === "data:,") {
-        throw new Error("Invalid image data generated by html2canvas")
-      }
-
-      const pdf = new jsPDF({
-        orientation: "landscape",
-        unit: "mm",
-        format: "a4",
-      })
-
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = pdf.internal.pageSize.getHeight()
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min((pdfWidth - 20) / imgWidth, (pdfHeight - 20) / imgHeight)
-      const scaledWidth = imgWidth * ratio
-      const scaledHeight = imgHeight * ratio
-
-      pdf.addImage(imgData, "PNG", 10, 10, scaledWidth, scaledHeight)
-      pdf.save("LJ_University_Timetable.pdf")
-      showToastMessage("PDF downloaded successfully!")
-    } catch (error) {
-      console.error("Error generating PDF:", error.message, error.stack)
-      showToastMessage(`Failed to generate PDF: ${error.message}`)
+      const response = await axios.post(
+        "http://localhost:8080/api/schedule/save",
+        { entries: [newEntry] },
+        { headers: { "user-id": userId } }
+      );
+      setScheduleData([
+        ...scheduleData,
+        { ...newEntry, _id: response.data.saved[0]._id },
+      ]);
+      // Reset form
+      setSelectedTimeSlot("");
+      setSelectedSubject("");
+      setSelectedTeacher("");
+      setSelectedRoom("");
+      setSelectedBatch("");
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to add schedule entry");
     }
+  };
+
+  const removeScheduleEntry = async (scheduleId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this schedule entry?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const userId = localStorage.getItem("userId");
+      await axios.delete(`http://localhost:8080/api/schedule/${scheduleId}`, {
+        headers: { "user-id": userId },
+      });
+      setScheduleData(scheduleData.filter((entry) => entry._id !== scheduleId));
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete schedule entry");
+    }
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!adminData.div || !adminData.year || !selectedDay) {
+      alert("Please ensure department, year, and day are selected.");
+      return;
+    }
+
+    if (scheduleData.length === 0) {
+      alert("No schedule entries to save.");
+      return;
+    }
+
+    alert(
+      `Schedule for ${adminData.div} - Year ${adminData.year} - ${selectedDay} has been saved successfully!`
+    );
+  };
+
+  const getTimeSlotLabel = (timeSlotId) => {
+    const slot = timeSlots.find((s) => s.id === timeSlotId);
+    return slot ? `${slot.label} (${slot.time})` : timeSlotId;
+  };
+
+  const getBatchArray = () => {
+    return batches.map((batch) => batch.name);
+  };
+
+  const getScheduleForBatch = (batchName) => {
+    return scheduleData.filter((entry) => entry.batch === batchName);
+  };
+
+  const getScheduleForBatchByDay = (batchName) => {
+    const batchSchedule = getScheduleForBatch(batchName);
+    return days.reduce((acc, dayName) => {
+      acc[dayName] = batchSchedule.filter((entry) => entry.day === dayName);
+      return acc;
+    }, {});
+  };
+
+  const getBatchColor = (batchName) => {
+    const colors = [
+      "bg-blue-100 border-blue-300 text-blue-800",
+      "bg-green-100 border-green-300 text-green-800",
+      "bg-purple-100 border-purple-300 text-purple-800",
+      "bg-orange-100 border-orange-300 text-orange-800",
+      "bg-pink-100 border-pink-300 text-pink-800",
+      "bg-indigo-100 border-indigo-300 text-indigo-800",
+      "bg-yellow-100 border-yellow-300 text-yellow-800",
+      "bg-red-100 border-red-300 text-red-800",
+    ];
+    const index = batches.findIndex((b) => b.name === batchName);
+    return (
+      colors[index % colors.length] ||
+      "bg-gray-100 border-gray-300 text-gray-800"
+    );
+  };
+
+  const getDayColor = (dayName) => {
+    const dayColors = {
+      Monday: "bg-red-50 border-red-200",
+      Tuesday: "bg-orange-50 border-orange-200",
+      Wednesday: "bg-yellow-50 border-yellow-200",
+      Thursday: "bg-green-50 border-green-200",
+      Friday: "bg-blue-50 border-blue-200",
+      Saturday: "bg-purple-50 border-purple-200",
+    };
+    return dayColors[dayName] || "bg-gray-50 border-gray-200";
+  };
+
+  if (loading) {
+    return <div className="text-center py-10">Loading...</div>;
   }
 
-  const getDayRowSpan = (daySlots) => daySlots.length
+  if (error) {
+    return <div className="text-center py-10 text-red-600">{error}</div>;
+  }
 
   return (
-    <div className="flex min-h-screen bg-gray-50 w-full">
-      <div className="w-1/6 flex-shrink-0">
+    <div className="flex min-h-screen mt-16 bg-gradient-to-br from-blue-50 to-white">
+      {/* Sidebar */}
+      <div className="w-1/6 min-h-screen bg-white border-r border-blue-200">
         <Sidebar />
       </div>
 
-      <div className="w-5/6 flex-grow p-4 overflow-auto mt-16">
-        <div className="max-w-full mx-auto space-y-6">
-          {showToast && (
-            <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300">
-              {toastMessage}
+      {/* Main Content */}
+      <div className="w-5/6 p-6 overflow-x-auto min-w-5/6">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <p className="text-blue-600 text-lg">
+              Admin Panel - Schedule Management
+            </p>
+          </div>
+
+          {/* Selection Controls */}
+          <div className="mb-8 bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
+            <div className="bg-blue-600 text-white p-6">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                Schedule Configuration
+              </h2>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Department Display */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-blue-900">
+                    Department
+                  </label>
+                  <div className="w-full border border-blue-200 rounded-md px-3 py-2 bg-gray-100">
+                    {adminData.div || "Loading..."}
+                  </div>
+                </div>
+
+                {/* Year Display */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-blue-900">
+                    Year
+                  </label>
+                  <div className="w-full border border-blue-200 rounded-md px-3 py-2 bg-gray-100">
+                    {adminData.year || "Loading..."}
+                  </div>
+                </div>
+
+                {/* Day Selection */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-blue-900">
+                    Day
+                  </label>
+                  <select
+                    value={selectedDay}
+                    onChange={(e) => setSelectedDay(e.target.value)}
+                    className="w-full border border-blue-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-md px-3 py-2 bg-white">
+                    <option value="">Select Day</option>
+                    {days.map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Selected Info Display */}
+              {adminData.div && adminData.year && selectedDay && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                        />
+                      </svg>
+                      <span className="font-medium text-blue-900">
+                        {adminData.div} - Year {adminData.year}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <span className="font-medium text-blue-900">
+                        {selectedDay}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 text-blue-600"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                        />
+                      </svg>
+                      <span className="font-medium text-blue-900">
+                        {batches.length} Batches
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Schedule Creator */}
+          {adminData.div && adminData.year && selectedDay && (
+            <div className="space-y-6">
+              {/* Add Schedule Entry Form */}
+              <div className="bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
+                <div className="bg-blue-600 text-white p-6">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Add Schedule Entry
+                  </h2>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    {/* Time Slot */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-blue-900">
+                        Time Slot
+                      </label>
+                      <select
+                        value={selectedTimeSlot}
+                        onChange={(e) => setSelectedTimeSlot(e.target.value)}
+                        className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select Time Slot</option>
+                        {timeSlots
+                          .filter((slot) => !slot.isBreak)
+                          .map((slot) => (
+                            <option key={slot.id} value={slot.id}>
+                              {slot.label} - {slot.time}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Batch */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-blue-900">
+                        Batch
+                      </label>
+                      <select
+                        value={selectedBatch}
+                        onChange={(e) => setSelectedBatch(e.target.value)}
+                        className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select Batch</option>
+                        {batches.map((batch) => (
+                          <option key={batch._id} value={batch.name}>
+                            {batch.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Subject */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-blue-900">
+                        Subject
+                      </label>
+                      <select
+                        value={selectedSubject}
+                        onChange={(e) => setSelectedSubject(e.target.value)}
+                        className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select Subject</option>
+                        {subjects.map((subject) => (
+                          <option key={subject._id} value={subject.name}>
+                            {subject.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Teacher */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-blue-900">
+                        Teacher
+                      </label>
+                      <select
+                        value={selectedTeacher}
+                        onChange={(e) => setSelectedTeacher(e.target.value)}
+                        className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select Teacher</option>
+                        {teachers.map((teacher) => (
+                          <option key={teacher._id} value={teacher.name}>
+                            {teacher.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Room */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-blue-900">
+                        Room
+                      </label>
+                      <select
+                        value={selectedRoom}
+                        onChange={(e) => setSelectedRoom(e.target.value)}
+                        className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select Room</option>
+                        {rooms.map((room) => (
+                          <option key={room} value={room}>
+                            {room}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={addScheduleEntry}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium flex items-center gap-2 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    disabled={
+                      !selectedTimeSlot ||
+                      !selectedSubject ||
+                      !selectedTeacher ||
+                      !selectedRoom ||
+                      !selectedBatch
+                    }>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Add to Schedule
+                  </button>
+                </div>
+              </div>
+
+              {/* Schedule Overview by Batch */}
+              <div className="bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
+                <div className="bg-blue-100 p-6">
+                  <h2 className="text-blue-900 font-semibold flex items-center gap-2">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
+                    </svg>
+                    Weekly Schedule Overview - All Days
+                  </h2>
+                </div>
+                <div className="p-6">
+                  {scheduleData.length === 0 ? (
+                    <div className="text-center py-8 text-blue-600">
+                      <svg
+                        className="w-12 h-12 mx-auto mb-4 opacity-50"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <p>
+                        No schedule entries added yet. Start adding entries
+                        above.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      {/* Scrollable batch tabs */}
+                      <div className="w-full overflow-x-auto">
+                        <div className="flex space-x-1 bg-blue-50 p-1 rounded-md min-w-full">
+                          {getBatchArray().map((batch) => (
+                            <button
+                              key={batch}
+                              onClick={() => setActiveTab(batch)}
+                              className={`flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all ${
+                                activeTab === batch
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-blue-600 hover:bg-blue-100"
+                              }`}>
+                              Batch {batch}
+                              {getScheduleForBatch(batch).length > 0 && (
+                                <span className="ml-1 bg-blue-200 text-blue-800 text-xs px-1.5 py-0.5 rounded-full">
+                                  {getScheduleForBatch(batch).length}
+                                </span>
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {getBatchArray().map((batch) => {
+                        const scheduleByDay = getScheduleForBatchByDay(batch);
+
+                        return (
+                          <div
+                            key={batch}
+                            className={`mt-6 ${
+                              activeTab === batch ? "block" : "hidden"
+                            }`}>
+                            <div className="flex items-center gap-2 mb-4">
+                              <span
+                                className={`${getBatchColor(
+                                  batch
+                                )} text-sm px-3 py-1 rounded-md border`}>
+                                Batch {batch} - Weekly Schedule
+                              </span>
+                              <span className="text-sm text-blue-600">
+                                {getScheduleForBatch(batch).length} lectures
+                                scheduled
+                              </span>
+                            </div>
+
+                            {getScheduleForBatch(batch).length === 0 ? (
+                              <div className="text-center py-8 text-blue-400 bg-blue-50 rounded-lg">
+                                <svg
+                                  className="w-8 h-8 mx-auto mb-2 opacity-50"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24">
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                  />
+                                </svg>
+                                <p>No lectures scheduled for Batch {batch}</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-6">
+                                {Object.entries(scheduleByDay).map(
+                                  ([dayName, daySchedule]) => (
+                                    <div
+                                      key={dayName}
+                                      className={`rounded-lg border-2 ${getDayColor(
+                                        dayName
+                                      )} p-4`}>
+                                      <div className="flex items-center gap-2 mb-4">
+                                        <svg
+                                          className="w-5 h-5 text-blue-600"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24">
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                          />
+                                        </svg>
+                                        <h3 className="text-lg font-semibold text-blue-900">
+                                          {dayName}
+                                        </h3>
+                                        <span className="bg-white border border-gray-300 px-2 py-1 rounded text-sm">
+                                          {daySchedule.length} lectures
+                                        </span>
+                                      </div>
+
+                                      {daySchedule.length === 0 ? (
+                                        <div className="text-center py-4 text-blue-400">
+                                          <p className="text-sm">
+                                            No lectures scheduled for {dayName}
+                                          </p>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-3">
+                                          {daySchedule
+                                            .sort(
+                                              (a, b) =>
+                                                parseInt(
+                                                  a.timeSlot ||
+                                                    timeSlots.findIndex(
+                                                      (t) => t.time === a.time
+                                                    ) + 1
+                                                ) -
+                                                parseInt(
+                                                  b.timeSlot ||
+                                                    timeSlots.findIndex(
+                                                      (t) => t.time === b.time
+                                                    ) + 1
+                                                )
+                                            )
+                                            .map((entry, index) => (
+                                              <div
+                                                key={entry._id}
+                                                className="flex items-center justify-between p-3 bg-white rounded-lg border-l-4 border-blue-400 shadow-sm">
+                                                <div className="flex items-center space-x-4">
+                                                  <div className="flex items-center gap-2 text-sm min-w-[140px]">
+                                                    <svg
+                                                      className="w-4 h-4 text-blue-600"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      viewBox="0 0 24 24">
+                                                      <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                      />
+                                                    </svg>
+                                                    <span className="font-medium text-blue-900">
+                                                      {entry.timeSlot
+                                                        ? getTimeSlotLabel(
+                                                            entry.timeSlot
+                                                          )
+                                                        : timeSlots.find(
+                                                            (t) =>
+                                                              t.time ===
+                                                              entry.time
+                                                          )?.label ||
+                                                          entry.time}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-2 text-sm min-w-[160px]">
+                                                    <svg
+                                                      className="w-4 h-4 text-blue-600"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      viewBox="0 0 24 24">
+                                                      <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                                      />
+                                                    </svg>
+                                                    <span className="text-blue-800 font-medium">
+                                                      {entry.subject.name}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-2 text-sm min-w-[140px]">
+                                                    <svg
+                                                      className="w-4 h-4 text-blue-600"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      viewBox="0 0 24 24">
+                                                      <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                      />
+                                                    </svg>
+                                                    <span className="text-blue-700">
+                                                      {entry.teacher.name}
+                                                    </span>
+                                                  </div>
+                                                  <div className="flex items-center gap-2 text-sm">
+                                                    <svg
+                                                      className="w-4 h-4 text-blue-600"
+                                                      fill="none"
+                                                      stroke="currentColor"
+                                                      viewBox="0 0 24 24">
+                                                      <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                                                      />
+                                                      <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth={2}
+                                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                                                      />
+                                                    </svg>
+                                                    <span className="text-blue-700">
+                                                      {entry.room}
+                                                    </span>
+                                                  </div>
+                                                </div>
+                                                <button
+                                                  onClick={() =>
+                                                    removeScheduleEntry(
+                                                      entry._id
+                                                    )
+                                                  }
+                                                  className="text-red-600 border border-red-300 hover:bg-red-50 p-2 rounded-md transition-colors">
+                                                  <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                    />
+                                                  </svg>
+                                                </button>
+                                              </div>
+                                            ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="p-6 text-center">
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">L. J. Institute of Engineering & Technology</h1>
-              <p className="text-lg text-gray-700 mb-1">CE/IT-II Department</p>
-              <p className="text-md text-gray-600">SEM - IV TIMETABLE (W.E.F. 10th JUNE 2025 TO 18th JULY 2025)</p>
+          {/* Save Button */}
+          {adminData.div && adminData.year && selectedDay && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={handleSaveSchedule}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg rounded-lg font-medium flex items-center gap-2 transition-colors">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+                  />
+                </svg>
+                Save Complete Schedule
+              </button>
             </div>
-          </div>
+          )}
 
-          <div className="flex gap-4 justify-center">
-            <button
-              onClick={downloadPDF}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200"
-            >
-              Download PDF
-            </button>
-            <button
-              onClick={handleSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200"
-            >
-              Save Timetable
-            </button>
-            <button
-              onClick={resetTimetable}
-              className="border border-red-300 text-red-600 hover:bg-red-50 font-medium px-6 py-2 rounded-lg transition-colors duration-200"
-            >
-              Reset All
-            </button>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md" ref={timetableRef}>
-            <div className="p-6">
-              <h2 className="text-xl font-semibold mb-2">Weekly Schedule Editor</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Select subjects, faculty, and rooms for each batch and time slot
-              </p>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300 text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 p-2 text-left font-semibold min-w-16">DAY</th>
-                      <th className="border border-gray-300 p-2 text-left font-semibold min-w-32">Class Name</th>
-                      {Array.from({ length: 8 }, (_, i) => (
-                        <th key={i} className="border border-gray-300 p-2 text-center font-semibold min-w-40">
-                          Batch B{i + 1}
-                        </th>
-                      ))}
-                      <th className="border border-gray-300 p-2 text-center font-semibold min-w-32">Timings</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {timetableData.map((day, dayIndex) =>
-                      day.slots.map((slot, slotIndex) => (
-                        <tr key={`${day.day}-${slotIndex}`}>
-                          {slotIndex === 0 && (
-                            <td
-                              rowSpan={getDayRowSpan(day.slots)}
-                              className="border border-gray-300 p-2 font-bold bg-blue-50 text-center align-top text-lg"
-                            >
-                              {day.day}
-                            </td>
-                          )}
-
-                          <td className="border border-gray-300 p-2 text-sm font-medium bg-gray-50">
-                            {slot.time === "BREAK" ? (
-                              <div className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-center font-semibold">
-                                BREAK
-                              </div>
-                            ) : (
-                              slot.time
-                            )}
-                          </td>
-
-                          {slot.time === "BREAK" ? (
-                            <td colSpan={8} className="border border-gray-300 p-2 text-center bg-yellow-50"></td>
-                          ) : (
-                            slot.classes.map((classSlot, batchIndex) => (
-                              <td key={batchIndex} className="border border-gray-300 p-1">
-                                <div className="space-y-1">
-                                  <select
-                                    value={classSlot.subject}
-                                    onChange={(e) =>
-                                      updateClassSlot(dayIndex, slotIndex, batchIndex, "subject", e.target.value)
-                                    }
-                                    className="w-full h-7 text-xs border border-gray-300 rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  >
-                                    {subjects.map((subject) => (
-                                      <option key={subject.code} value={subject.code}>
-                                        {subject.code === "none" ? "No Class" : `${subject.code} - ${subject.name}`}
-                                      </option>
-                                    ))}
-                                  </select>
-
-                                  {classSlot.subject && classSlot.subject !== "none" && (
-                                    <select
-                                      value={classSlot.faculty}
-                                      onChange={(e) =>
-                                        updateClassSlot(dayIndex, slotIndex, batchIndex, "faculty", e.target.value)
-                                      }
-                                      className="w-full h-7 text-xs border border-gray-300 rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                      <option value="">Select Faculty</option>
-                                      {subjects
-                                        .find((s) => s.code === classSlot.subject)
-                                        ?.faculty.map((faculty) => (
-                                          <option key={faculty} value={faculty}>
-                                            {faculty}
-                                          </option>
-                                        ))}
-                                    </select>
-                                  )}
-
-                                  {classSlot.subject && classSlot.subject !== "none" && (
-                                    <select
-                                      value={classSlot.room}
-                                      onChange={(e) =>
-                                        updateClassSlot(dayIndex, slotIndex, batchIndex, "room", e.target.value)
-                                      }
-                                      className="w-full h-7 text-xs border border-gray-300 rounded px-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                      <option value="">Select Room</option>
-                                      {rooms.map((room) => (
-                                        <option key={room} value={room}>
-                                          {room}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  )}
-
-                                  {classSlot.subject && classSlot.subject !== "none" && (
-                                    <div className="mt-1">
-                                      <span
-                                        className={`inline-block text-xs px-2 py-1 rounded-box border ${getSubjectColor(classSlot.subject)}`}
-                                      >
-                                        {classSlot.subject} ({classSlot.faculty})
-                                      </span>
-                                      {classSlot.room && (
-                                        <div className="text-xs text-gray-500 mt-1">{classSlot.room}</div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            ))
-                          )}
-
-                          <td className="border border-gray-300 p-2 text-xs text-center bg-gray-50">
-                            {slot.time === "BREAK" ? "" : slot.time}
-                          </td>
-                        </tr>
-                      )),
-                    )}
-                  </tbody>
-                </table>
-              </div>
+          {/* Instructions */}
+          <div className="mt-8 bg-white border border-blue-200 rounded-lg overflow-hidden">
+            <div className="bg-blue-100 p-6">
+              <h2 className="text-blue-900 font-semibold flex items-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Schedule Information
+              </h2>
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md">
             <div className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Sem IV Subject & Faculty Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold mb-2">Full Stack Development with JavaScript - 2 (FSD-2)</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Prof. Mitesh Thakkar (MJT)</p>
-                      <p>Prof. Priyen Patel (PSP)</p>
-                      <p>Prof. Nidhi Seta (NAS)</p>
-                      <p>Prof. Pravin Zinzala (PBZ)</p>
-                    </div>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold mb-2">Computer Organization and Architecture (COA)</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Prof. Vikas Yadav (VBY)</p>
-                      <p>Prof. Sweta Shah (SSD)</p>
-                    </div>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold mb-2">Fundamentals of Computer Science using Python-2 (Python-2)</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Prof. Vishal Acharya (VHA)</p>
-                      <p>Prof. Tejas Thakkar (TAT)</p>
-                      <p>Prof. Dhruv Prajapati (DVP)</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold mb-2">Theory of Computation (TOC)</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Prof. Dhara Patel (DPS)</p>
-                      <p>Prof. Parul Oza (PDO)</p>
-                    </div>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg p-4">
-                    <h3 className="font-semibold mb-2">Discrete Mathematics (DM)</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Prof. Dipali Parekh (DDP)</p>
-                      <p>Prof. Falshruti Thakkar (FRT)</p>
-                      <p>Prof. Bhargav Suthar (BNS)</p>
-                      <p>Prof. Meet Savani (MSS)</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="p-6">
-              <div className="flex justify-between items-center text-sm text-gray-600">
                 <div>
-                  <p>
-                    <strong>Prepared By:</strong> Prof. Parul Oza, Prof. Dhara Patel
-                  </p>
+                  <h3 className="font-semibold text-blue-900 mb-3">
+                    Time Slots
+                  </h3>
+                  <ul className="space-y-2 text-sm text-blue-700">
+                    <li>• 1st Lecture: 8:45 AM - 9:45 AM</li>
+                    <li>• 2nd Lecture: 9:45 AM - 10:45 AM</li>
+                    <li>• Break: 10:45 AM - 11:30 AM</li>
+                    <li>• 3rd Lecture: 11:30 AM - 12:30 PM</li>
+                    <li>• 4th Lecture: 12:30 PM - 1:30 PM</li>
+                    <li>• 5th Lecture: 1:45 PM - 2:45 PM</li>
+                  </ul>
                 </div>
-                <div className="text-right">
-                  <p>Prof. Mitesh Thakkar</p>
-                  <p>HOD (SY CE/IT-2)</p>
+                <div>
+                  <h3 className="font-semibold text-blue-900 mb-3">Features</h3>
+                  <ul className="space-y-2 text-sm text-blue-700">
+                    <li>• Create schedules for all batches simultaneously</li>
+                    <li>• Assign subjects and teachers to time slots</li>
+                    <li>• Automatic room allocation</li>
+                    <li>• Weekly schedule management</li>
+                    <li>• Day-wise schedule organization</li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -844,5 +935,7 @@ export default function DailySchedule() {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
+
+export default AdminSchedule;

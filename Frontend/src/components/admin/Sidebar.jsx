@@ -29,7 +29,7 @@ const Sidebar = () => {
             className={linkClasses}
             style={{ color: "#4B5563" }}>
             <i className="fa-regular fa-calendar fa-lg pr-2"></i>
-            Daily Schedule
+            Weekly Schedule
           </Link>
         </div>
         <div>

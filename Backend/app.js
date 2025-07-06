@@ -9,6 +9,8 @@ const Admin = require("./models/adminSchema");
 const batchRoutes = require("./routes/batch");
 const teacherRoutes = require("./routes/teacher");
 const subjectRoutes = require("./routes/subject");
+const scheduleRoutes = require("./routes/schedule");
+const apiRoutes = require("./routes/api");
 
 const path = require("path");
 const methodOverride = require("method-override");
@@ -31,7 +33,10 @@ app.use(express.json());
 app.use("/auth", require("./routes/auth"));
 app.use("/api/batches", batchRoutes);
 app.use("/api/teacher", teacherRoutes);
-app.use("/api/subjects", subjectRoutes); 
+app.use("/api/subjects", subjectRoutes);
+app.use("/api/schedule", require("./routes/schedule"));
+app.use("/api/schedule", scheduleRoutes);
+app.use("/api", apiRoutes);
 
 // MongoDB connection
 const dburl = process.env.MONGO_URL;
