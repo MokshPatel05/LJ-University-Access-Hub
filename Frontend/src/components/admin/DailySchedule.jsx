@@ -142,6 +142,10 @@ const AdminSchedule = () => {
         params: { department, year },
       });
       setScheduleData(response.data);
+      // Set the first batch as active tab if there are schedule entries
+      if (response.data.length > 0 && batches.length > 0) {
+        setActiveTab(batches[0].name);
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to fetch schedule");
     }
@@ -243,7 +247,9 @@ const AdminSchedule = () => {
   };
 
   const getBatchArray = () => {
-    return batches.map((batch) => batch.name);
+    return [...batches]
+      .map((batch) => batch.name)
+      .sort((a, b) => a.localeCompare(b));
   };
 
   const getScheduleForBatch = (batchName) => {
@@ -374,7 +380,7 @@ const AdminSchedule = () => {
               </div>
 
               {/* Selected Info Display */}
-              {adminData.div && adminData.year && selectedDay && (
+              {adminData.div && adminData.year && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
@@ -394,23 +400,25 @@ const AdminSchedule = () => {
                         {adminData.div} - Year {adminData.year}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <svg
-                        className="w-4 h-4 text-blue-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <span className="font-medium text-blue-900">
-                        {selectedDay}
-                      </span>
-                    </div>
+                    {selectedDay && (
+                      <div className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        <span className="font-medium text-blue-900">
+                          {selectedDay}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <svg
                         className="w-4 h-4 text-blue-600"
@@ -488,11 +496,13 @@ const AdminSchedule = () => {
                         onChange={(e) => setSelectedBatch(e.target.value)}
                         className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option value="">Select Batch</option>
-                        {batches.map((batch) => (
-                          <option key={batch._id} value={batch.name}>
-                            {batch.name}
-                          </option>
-                        ))}
+                        {[...batches]
+                          .sort((a, b) => a.name.localeCompare(b.name))
+                          .map((batch) => (
+                            <option key={batch._id} value={batch.name}>
+                              {batch.name}
+                            </option>
+                          ))}
                       </select>
                     </div>
 
@@ -577,8 +587,12 @@ const AdminSchedule = () => {
                   </button>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Schedule Overview by Batch */}
+          {/* Schedule Overview by Batch */}
+          {adminData.div && adminData.year && scheduleData.length > 0 && (
+            <div className="space-y-6">
               <div className="bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
                 <div className="bg-blue-100 p-6">
                   <h2 className="text-blue-900 font-semibold flex items-center gap-2">

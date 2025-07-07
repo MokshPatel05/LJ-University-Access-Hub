@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import {
   Calendar,
   Users,
@@ -8,8 +8,10 @@ import {
   TrendingUp,
 } from "lucide-react";
 import Sidebar from "./Sidebar"; // Adjust path based on your project structure
+import useUserId from "../../hooks/useUserId";
 
 const AdminDash = () => {
+  const userId = useUserId(); // get the user's id
   const stats = [
     {
       title: "Total Teachers",
@@ -85,6 +87,7 @@ const AdminDash = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Quick Actions Card 1 */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
               <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-200">
                 <h3 className="text-2xl font-semibold leading-none tracking-tight">
@@ -93,18 +96,53 @@ const AdminDash = () => {
               </div>
               <div className="p-6 pt-0">
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-                    <Calendar className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                  <Link
+                    to={`/adminDash/${userId}/daily-schedule`}
+                    className="text-decoration-none flex flex-col items-center justify-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-center">
+                    <Calendar className="h-6 w-6 text-blue-600 mb-2" />
                     <span className="text-sm font-medium text-blue-700">
                       Create Schedule
                     </span>
-                  </button>
-                  <button className="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-                    <Users className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                  </Link>
+
+                  <Link
+                    to={`/adminDash/${userId}/teacher-management`}
+                    className="text-decoration-none flex flex-col items-center justify-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-center">
+                    <Users className="h-6 w-6 text-green-600 mb-2" />
                     <span className="text-sm font-medium text-green-700">
                       Add Teacher
                     </span>
-                  </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions Card 2 */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-200">
+                <h3 className="text-2xl font-semibold leading-none tracking-tight">
+                  Quick Actions
+                </h3>
+              </div>
+              <div className="p-6 pt-0">
+                <div className="grid grid-cols-2 gap-4">
+                  <Link
+                    to={`/adminDash/${userId}/attendance/download`}
+                    className="text-decoration-none flex flex-col items-center justify-center p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-center">
+                    <i className="fa-solid fa-download h-5 w-6 text-red-600 mb-2"></i>
+                    <span className="text-sm font-medium text-red-700">
+                      Attendance Download
+                    </span>
+                  </Link>
+
+                  <Link
+                    to={`/adminDash/${userId}/batch-management`}
+                    className="text-decoration-none flex flex-col items-center justify-center p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors text-center">
+                    <i className="fa-solid fa-graduation-cap pr-2 h-5 w-6 text-yellow-600 mb-2"></i>
+                    <span className="text-sm font-medium text-yellow-700">
+                      Add Batch
+                    </span>
+                  </Link>
                 </div>
               </div>
             </div>
