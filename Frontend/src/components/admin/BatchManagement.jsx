@@ -14,10 +14,13 @@ function BatchManagement() {
 
   const [editingBatchId, setEditingBatchId] = useState(null);
 
-  // ✅ Fetch batches from backend
+  // ✅ Fetch batches only for logged-in admin
   const fetchBatches = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/batches");
+      const adminId = localStorage.getItem("userId");
+      const res = await fetch(
+        `http://localhost:8080/api/batches?adminId=${adminId}`
+      );
       const data = await res.json();
       setBatches(data);
     } catch (err) {
@@ -48,7 +51,7 @@ function BatchManagement() {
         name: batchName,
         department,
         year: academicYear,
-        createdBy: localStorage.getItem("userName") || "Unknown",
+        createdBy: localStorage.getItem("userId"),
       };
 
       try {
@@ -65,6 +68,7 @@ function BatchManagement() {
           if (!res.ok) throw new Error("Failed to update batch");
         } else {
           // ➕ CREATE MODE
+          console.log("Sending payload:", payload);
           const res = await fetch("http://localhost:8080/api/batches", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -151,7 +155,9 @@ function BatchManagement() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {batches
               .filter((batch) =>
-                batch.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+                batch.createdBy?.name
+                  ?.toLowerCase()
+                  .includes(searchTerm.toLowerCase())
               )
               .sort((a, b) => {
                 // Extract the numeric part after 'B' and compare as numbers
@@ -209,7 +215,7 @@ function BatchManagement() {
                       <span className="ml-1">{batch.students.length}</span>
                     </div>
                     <p className="text-xs text-gray-500 italic mt-2">
-                      Batch Under: {batch.createdBy}
+                      Batch Under: {batch.createdBy?.name}
                     </p>
                   </div>
                 </div>
@@ -264,7 +270,7 @@ function BatchManagement() {
                   name="department"
                   value={formData.department}
                   onChange={handleInputChange}
-                  placeholder="e.g. Computer Science"
+                  placeholder="e.g. SY2"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />

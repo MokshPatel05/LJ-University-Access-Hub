@@ -35,7 +35,7 @@ const batchData = Array.from({ length: 9 }, (_, i) => ({
 async function insertBatches() {
   try {
     await Batch.deleteMany({});
-    await Batch.insertMany(batchData);
+    // await Batch.insertMany(batchData);
     console.log("✅ Batches inserted successfully!");
   } catch (e) {
     console.error("❌ Error inserting batch data:", e);

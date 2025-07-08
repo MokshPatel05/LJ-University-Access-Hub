@@ -22,7 +22,8 @@ const batchSchema = new mongoose.Schema({
     },
   ],
   createdBy: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Admin",
     required: true,
   },
 });

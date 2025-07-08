@@ -4,12 +4,16 @@ const Teacher = require("../models/teacherSchema");
 const Subject = require("../models/subjectSchema");
 const Admin = require("../models/adminSchema");
 
-// Get all teachers
+// Get all teachers (optionally filtered by admin)
 router.get("/", async (req, res) => {
   try {
-    const teachers = await Teacher.find()
-      .populate("subjects", "name") // ✅ get subject names
-      .populate("admin", "name"); // optional
+    const { adminId } = req.query; // <-- get adminId from query
+
+    const filter = adminId ? { admin: adminId } : {};
+
+    const teachers = await Teacher.find(filter)
+      .populate("subjects", "name")
+      .populate("admin", "name");
 
     res.status(200).json(teachers);
   } catch (err) {
@@ -21,40 +25,29 @@ router.get("/", async (req, res) => {
 // Add new teacher
 router.post("/", async (req, res) => {
   try {
-    const { name, ID_Name, password, batch, subjects, adminId } = req.body;
-
-    // Validate subjects
-    const validSubjects = await Subject.find({ _id: { $in: subjects } });
-    if (validSubjects.length !== subjects.length) {
-      return res.status(400).json({ message: "Invalid subject(s) provided" });
-    }
-
-    // Validate admin
-    const admin = await Admin.findById(adminId);
-    if (!admin) {
-      return res.status(400).json({ message: "Invalid admin ID" });
-    }
+    const { name, ID_Name, password, subjects, batch, adminId } = req.body;
 
     const newTeacher = new Teacher({
       name,
       ID_Name,
       password,
-      batch,
       subjects,
-      admin: adminId,
+      batch,
+      admin: adminId, // link to admin
     });
 
-    await newTeacher.save();
+    const savedTeacher = await newTeacher.save();
 
-    // Update subject references
-    await Subject.updateMany(
-      { _id: { $in: subjects } },
-      { $addToSet: { teachers: newTeacher._id } }
+    // Add teacher to admin's teacher list
+    await Admin.findByIdAndUpdate(
+      adminId,
+      { $addToSet: { teachers: savedTeacher._id } }, // use $addToSet to prevent duplicates
+      { new: true }
     );
 
-    res.status(201).json({ message: "Teacher created successfully" });
-  } catch (err) {
-    console.error("Error creating teacher:", err);
+    res.status(201).json(savedTeacher);
+  } catch (error) {
+    console.error("Error creating teacher:", error);
     res.status(500).json({ message: "Error creating teacher" });
   }
 });

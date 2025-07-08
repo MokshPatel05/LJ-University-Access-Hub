@@ -9,33 +9,56 @@ import {
 } from "lucide-react";
 import Sidebar from "./Sidebar"; // Adjust path based on your project structure
 import useUserId from "../../hooks/useUserId";
+import { useState, useEffect } from "react";
 
 const AdminDash = () => {
   const userId = useUserId(); // get the user's id
+  const [dashboardStats, setDashboardStats] = useState({
+    totalTeachers: 0,
+    activeBatches: 0,
+    todaysClasses: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/admin-dashboard-stats?userId=${userId}`
+        );
+        const data = await response.json();
+        setDashboardStats(data);
+      } catch (err) {
+        console.error("Failed to fetch dashboard stats", err);
+      }
+    };
+
+    if (userId) fetchStats();
+  }, [userId]);
+
   const stats = [
     {
       title: "Total Teachers",
-      value: "24",
+      value: dashboardStats.totalTeachers,
       icon: Users,
       color: "text-blue-600",
     },
     {
       title: "Active Batches",
-      value: "8",
+      value: dashboardStats.activeBatches,
       icon: GraduationCap,
       color: "text-green-600",
     },
     {
       title: "Today's Classes",
-      value: "15",
+      value: dashboardStats.todaysClasses,
       icon: Calendar,
       color: "text-purple-600",
     },
     {
-      title: "Attendance Reports",
-      value: "42",
-      icon: Download,
-      color: "text-orange-600",
+      title: "Attendance Report",
+      value: 10,
+      icon: Users,
+      color: "text-red-500",
     },
   ];
 

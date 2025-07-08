@@ -2,10 +2,14 @@ const express = require("express");
 const router = express.Router();
 const Batch = require("../models/batchSchema");
 
-// 🔹 GET all batches
+// 🔹 GET all batches (optionally filter by admin)
 router.get("/", async (req, res) => {
   try {
-    const batches = await Batch.find();
+    const { adminId } = req.query;
+
+    const filter = adminId ? { createdBy: adminId } : {};
+
+    const batches = await Batch.find(filter).populate("createdBy", "name");
     res.json(batches);
   } catch (error) {
     res.status(500).json({ message: "Error fetching batches" });
@@ -16,14 +20,7 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   try {
     const { name, department, year, students, createdBy } = req.body;
-
-    const newBatch = new Batch({
-      name,
-      department,
-      year,
-      students,
-      createdBy, // ✅ store who created it
-    });
+    const newBatch = new Batch({ name, department, year, students, createdBy });
 
     await newBatch.save();
     res.status(201).json(newBatch);

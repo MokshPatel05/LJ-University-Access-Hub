@@ -6,6 +6,8 @@ const port = 8080;
 
 const Teacher = require("./models/teacherSchema");
 const Admin = require("./models/adminSchema");
+const Batch = require("./models/batchSchema");
+const Schedule = require("./models/scheduleSchema");
 const batchRoutes = require("./routes/batch");
 const teacherRoutes = require("./routes/teacher");
 const subjectRoutes = require("./routes/subject");
@@ -169,6 +171,34 @@ app.post("/auth/login", (req, res, next) => {
     passport.authenticate("admin", callback)(req, res, next);
   } else {
     res.status(400).json({ message: "Invalid user type" });
+  }
+});
+
+//admin page counts
+app.get("/api/admin-dashboard-stats", async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) return res.status(400).json({ message: "Missing userId" });
+
+  try {
+    const totalTeachers = await Teacher.countDocuments({ admin: userId });
+    const activeBatches = await Batch.countDocuments({ createdBy: userId });
+
+    const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+    const todaysClasses = await Schedule.countDocuments({
+      admin: userId,
+      day: today,
+    });
+
+    res.json({
+      totalTeachers,
+      activeBatches,
+      todaysClasses,
+    });
+  } catch (error) {
+    console.error("Dashboard stats fetch failed:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 

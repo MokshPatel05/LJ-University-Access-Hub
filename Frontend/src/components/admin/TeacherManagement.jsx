@@ -26,7 +26,8 @@ const TeacherManager = () => {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get("/api/teacher");
+      const adminId = localStorage.getItem("userId");
+      const res = await axios.get(`/api/teacher?adminId=${adminId}`);
       console.log("Fetched teachers:", res.data);
       setTeachers(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
