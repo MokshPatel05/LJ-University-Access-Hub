@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 
-// Hardcoded time slots and rooms
 const timeSlots = [
   { id: "1", time: "8:45 AM - 9:45 AM", label: "1st Lecture" },
   { id: "2", time: "9:45 AM - 10:45 AM", label: "2nd Lecture" },
@@ -48,11 +47,10 @@ const AdminSchedule = () => {
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedBatch, setSelectedBatch] = useState("");
-  const [activeTab, setActiveTab] = useState("1");
+  const [activeTab, setActiveTab] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch admin data, batches, subjects, and schedule on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -71,14 +69,15 @@ const AdminSchedule = () => {
         const { div, year } = adminResponse.data;
         setAdminData({ div, year });
 
-        // Fetch batches for the admin's year
+        // Fetch batches for the admin's year and department
         const batchesResponse = await axios.get(
           "http://localhost:8080/api/batches",
           {
             headers: { "user-id": userId },
-            params: { year },
+            params: { year, department: div }, // Filter by department
           }
         );
+        console.log("Fetched batches:", batchesResponse.data); // Debug log
         setBatches(batchesResponse.data);
 
         // Fetch subjects for the admin's year
@@ -89,6 +88,7 @@ const AdminSchedule = () => {
             params: { year },
           }
         );
+        console.log("Fetched subjects:", subjectsResponse.data); // Debug log
         setSubjects(subjectsResponse.data);
 
         // Fetch schedule
@@ -105,7 +105,6 @@ const AdminSchedule = () => {
     fetchData();
   }, []);
 
-  // Fetch teachers when batch changes
   useEffect(() => {
     if (selectedBatch && selectedSubject && adminData.div) {
       const fetchTeachers = async () => {
@@ -122,6 +121,7 @@ const AdminSchedule = () => {
               },
             }
           );
+          console.log("Fetched teachers:", response.data); // Debug log
           setTeachers(response.data);
         } catch (err) {
           setError(err.response?.data?.message || "Failed to load teachers");
@@ -133,7 +133,6 @@ const AdminSchedule = () => {
     }
   }, [selectedBatch, selectedSubject, adminData.div]);
 
-  // Fetch schedule data
   const fetchSchedule = async (department, year) => {
     try {
       const userId = localStorage.getItem("userId");
@@ -141,12 +140,13 @@ const AdminSchedule = () => {
         headers: { "user-id": userId },
         params: { department, year },
       });
-      setScheduleData(response.data);
-      // Set the first batch as active tab if there are schedule entries
+      console.log("Fetched schedule:", response.data); // Debug log
+      setScheduleData(Array.isArray(response.data) ? response.data : []);
       if (response.data.length > 0 && batches.length > 0) {
-        setActiveTab(batches[0].name);
+        setActiveTab(batches[0]._id); // Set first batch as active tab
       }
     } catch (err) {
+      console.error("Error fetching schedule:", err);
       setError(err.response?.data?.message || "Failed to fetch schedule");
     }
   };
@@ -179,9 +179,7 @@ const AdminSchedule = () => {
       year: adminData.year,
       batch: selectedBatch,
       admin: userId,
-      time:
-        timeSlots.find((slot) => slot.id === selectedTimeSlot)?.time ||
-        selectedTimeSlot,
+      time: timeSlots.find((slot) => slot.id === selectedTimeSlot)?.time,
       subject: selectedSubjectObj._id,
       teacher: selectedTeacherObj._id,
       room: selectedRoom,
@@ -193,17 +191,18 @@ const AdminSchedule = () => {
         { entries: [newEntry] },
         { headers: { "user-id": userId } }
       );
+      console.log("Added schedule entry:", response.data); // Debug log
       setScheduleData([
         ...scheduleData,
         { ...newEntry, _id: response.data.saved[0]._id },
       ]);
-      // Reset form
       setSelectedTimeSlot("");
       setSelectedSubject("");
       setSelectedTeacher("");
       setSelectedRoom("");
       setSelectedBatch("");
     } catch (err) {
+      console.error("Error adding schedule:", err);
       alert(err.response?.data?.message || "Failed to add schedule entry");
     }
   };
@@ -241,30 +240,32 @@ const AdminSchedule = () => {
     );
   };
 
-  const getTimeSlotLabel = (timeSlotId) => {
-    const slot = timeSlots.find((s) => s.id === timeSlotId);
-    return slot ? `${slot.label} (${slot.time})` : timeSlotId;
+  const getTimeSlotLabel = (time) => {
+    const slot = timeSlots.find((s) => s.time === time);
+    return slot ? `${slot.label} (${slot.time})` : time;
   };
 
   const getBatchArray = () => {
-    return [...batches]
-      .map((batch) => batch.name)
-      .sort((a, b) => a.localeCompare(b));
+    // Filter batches by admin's department (as a fallback)
+    return batches
+      .filter(
+        (batch) => batch.department === adminData.div || !batch.department
+      )
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const getScheduleForBatch = (batchName) => {
-    return scheduleData.filter((entry) => entry.batch === batchName);
-  };
+  const getScheduleForBatch = (batchId) =>
+    scheduleData.filter((entry) => entry.batch === batchId);
 
-  const getScheduleForBatchByDay = (batchName) => {
-    const batchSchedule = getScheduleForBatch(batchName);
+  const getScheduleForBatchByDay = (batchId) => {
+    const batchSchedule = getScheduleForBatch(batchId);
     return days.reduce((acc, dayName) => {
       acc[dayName] = batchSchedule.filter((entry) => entry.day === dayName);
       return acc;
     }, {});
   };
 
-  const getBatchColor = (batchName) => {
+  const getBatchColor = (batchId) => {
     const colors = [
       "bg-blue-100 border-blue-300 text-blue-800",
       "bg-green-100 border-green-300 text-green-800",
@@ -275,7 +276,7 @@ const AdminSchedule = () => {
       "bg-yellow-100 border-yellow-300 text-yellow-800",
       "bg-red-100 border-red-300 text-red-800",
     ];
-    const index = batches.findIndex((b) => b.name === batchName);
+    const index = batches.findIndex((b) => b._id === batchId);
     return (
       colors[index % colors.length] ||
       "bg-gray-100 border-gray-300 text-gray-800"
@@ -304,22 +305,18 @@ const AdminSchedule = () => {
 
   return (
     <div className="flex min-h-screen mt-16 bg-gradient-to-br from-blue-50 to-white">
-      {/* Sidebar */}
-      <div className="w-1/6 min-h-screen bg-white border-r border-blue-200">
+      <div className="w-64 flex-shrink-0 bg-white border-r border-blue-200">
         <Sidebar />
       </div>
 
-      {/* Main Content */}
-      <div className="w-5/6 p-6 overflow-x-auto min-w-5/6">
+      <div className="flex-1 p-6 overflow-x-auto">
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="mb-8">
             <p className="text-blue-600 text-lg">
               Admin Panel - Schedule Management
             </p>
           </div>
 
-          {/* Selection Controls */}
           <div className="mb-8 bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
             <div className="bg-blue-600 text-white p-6">
               <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -340,7 +337,6 @@ const AdminSchedule = () => {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Department Display */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
                     Department
@@ -350,7 +346,6 @@ const AdminSchedule = () => {
                   </div>
                 </div>
 
-                {/* Year Display */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
                     Year
@@ -360,7 +355,6 @@ const AdminSchedule = () => {
                   </div>
                 </div>
 
-                {/* Day Selection */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-blue-900">
                     Day
@@ -379,7 +373,6 @@ const AdminSchedule = () => {
                 </div>
               </div>
 
-              {/* Selected Info Display */}
               {adminData.div && adminData.year && (
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="flex items-center gap-4 text-sm">
@@ -442,10 +435,8 @@ const AdminSchedule = () => {
             </div>
           </div>
 
-          {/* Schedule Creator */}
           {adminData.div && adminData.year && selectedDay && (
             <div className="space-y-6">
-              {/* Add Schedule Entry Form */}
               <div className="bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
                 <div className="bg-blue-600 text-white p-6">
                   <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -466,7 +457,6 @@ const AdminSchedule = () => {
                 </div>
                 <div className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    {/* Time Slot */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-blue-900">
                         Time Slot
@@ -486,7 +476,6 @@ const AdminSchedule = () => {
                       </select>
                     </div>
 
-                    {/* Batch */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-blue-900">
                         Batch
@@ -496,17 +485,14 @@ const AdminSchedule = () => {
                         onChange={(e) => setSelectedBatch(e.target.value)}
                         className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option value="">Select Batch</option>
-                        {[...batches]
-                          .sort((a, b) => a.name.localeCompare(b.name))
-                          .map((batch) => (
-                            <option key={batch._id} value={batch.name}>
-                              {batch.name}
-                            </option>
-                          ))}
+                        {getBatchArray().map((batch) => (
+                          <option key={batch._id} value={batch._id}>
+                            {batch.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
 
-                    {/* Subject */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-blue-900">
                         Subject
@@ -524,7 +510,6 @@ const AdminSchedule = () => {
                       </select>
                     </div>
 
-                    {/* Teacher */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-blue-900">
                         Teacher
@@ -542,7 +527,6 @@ const AdminSchedule = () => {
                       </select>
                     </div>
 
-                    {/* Room */}
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-blue-900">
                         Room
@@ -590,7 +574,6 @@ const AdminSchedule = () => {
             </div>
           )}
 
-          {/* Schedule Overview by Batch */}
           {adminData.div && adminData.year && scheduleData.length > 0 && (
             <div className="space-y-6">
               <div className="bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
@@ -633,22 +616,21 @@ const AdminSchedule = () => {
                     </div>
                   ) : (
                     <div className="w-full">
-                      {/* Scrollable batch tabs */}
                       <div className="w-full overflow-x-auto">
                         <div className="flex space-x-1 bg-blue-50 p-1 rounded-md min-w-full">
                           {getBatchArray().map((batch) => (
                             <button
-                              key={batch}
-                              onClick={() => setActiveTab(batch)}
-                              className={`flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium transition-all ${
-                                activeTab === batch
-                                  ? "bg-blue-600 text-white shadow-sm"
-                                  : "text-blue-600 hover:bg-blue-100"
+                              key={batch._id}
+                              onClick={() => setActiveTab(batch._id)}
+                              className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                                activeTab === batch._id
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100"
                               }`}>
-                              Batch {batch}
-                              {getScheduleForBatch(batch).length > 0 && (
-                                <span className="ml-1 bg-blue-200 text-blue-800 text-xs px-1.5 py-0.5 rounded-full">
-                                  {getScheduleForBatch(batch).length}
+                              Batch {batch.name}
+                              {getScheduleForBatch(batch._id).length > 0 && (
+                                <span className="ml-2 bg-white text-blue-600 px-2 py-1 rounded-full text-xs">
+                                  {getScheduleForBatch(batch._id).length}
                                 </span>
                               )}
                             </button>
@@ -657,28 +639,30 @@ const AdminSchedule = () => {
                       </div>
 
                       {getBatchArray().map((batch) => {
-                        const scheduleByDay = getScheduleForBatchByDay(batch);
+                        const scheduleByDay = getScheduleForBatchByDay(
+                          batch._id
+                        );
 
                         return (
                           <div
-                            key={batch}
+                            key={batch._id}
                             className={`mt-6 ${
-                              activeTab === batch ? "block" : "hidden"
+                              activeTab === batch._id ? "block" : "hidden"
                             }`}>
                             <div className="flex items-center gap-2 mb-4">
                               <span
                                 className={`${getBatchColor(
-                                  batch
+                                  batch._id
                                 )} text-sm px-3 py-1 rounded-md border`}>
-                                Batch {batch} - Weekly Schedule
+                                Batch {batch.name} - Weekly Schedule
                               </span>
                               <span className="text-sm text-blue-600">
-                                {getScheduleForBatch(batch).length} lectures
+                                {getScheduleForBatch(batch._id).length} lectures
                                 scheduled
                               </span>
                             </div>
 
-                            {getScheduleForBatch(batch).length === 0 ? (
+                            {getScheduleForBatch(batch._id).length === 0 ? (
                               <div className="text-center py-8 text-blue-400 bg-blue-50 rounded-lg">
                                 <svg
                                   className="w-8 h-8 mx-auto mb-2 opacity-50"
@@ -692,7 +676,9 @@ const AdminSchedule = () => {
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                   />
                                 </svg>
-                                <p>No lectures scheduled for Batch {batch}</p>
+                                <p>
+                                  No lectures scheduled for Batch {batch.name}
+                                </p>
                               </div>
                             ) : (
                               <div className="space-y-6">
@@ -733,22 +719,18 @@ const AdminSchedule = () => {
                                       ) : (
                                         <div className="space-y-3">
                                           {daySchedule
-                                            .sort(
-                                              (a, b) =>
-                                                parseInt(
-                                                  a.timeSlot ||
-                                                    timeSlots.findIndex(
-                                                      (t) => t.time === a.time
-                                                    ) + 1
-                                                ) -
-                                                parseInt(
-                                                  b.timeSlot ||
-                                                    timeSlots.findIndex(
-                                                      (t) => t.time === b.time
-                                                    ) + 1
-                                                )
-                                            )
-                                            .map((entry, index) => (
+                                            .sort((a, b) => {
+                                              const aIndex =
+                                                timeSlots.findIndex(
+                                                  (t) => t.time === a.time
+                                                );
+                                              const bIndex =
+                                                timeSlots.findIndex(
+                                                  (t) => t.time === b.time
+                                                );
+                                              return aIndex - bIndex;
+                                            })
+                                            .map((entry) => (
                                               <div
                                                 key={entry._id}
                                                 className="flex items-center justify-between p-3 bg-white rounded-lg border-l-4 border-blue-400 shadow-sm">
@@ -767,16 +749,9 @@ const AdminSchedule = () => {
                                                       />
                                                     </svg>
                                                     <span className="font-medium text-blue-900">
-                                                      {entry.timeSlot
-                                                        ? getTimeSlotLabel(
-                                                            entry.timeSlot
-                                                          )
-                                                        : timeSlots.find(
-                                                            (t) =>
-                                                              t.time ===
-                                                              entry.time
-                                                          )?.label ||
-                                                          entry.time}
+                                                      {getTimeSlotLabel(
+                                                        entry.time
+                                                      )}
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center gap-2 text-sm min-w-[160px]">
@@ -793,7 +768,8 @@ const AdminSchedule = () => {
                                                       />
                                                     </svg>
                                                     <span className="text-blue-800 font-medium">
-                                                      {entry.subject.name}
+                                                      {entry.subject?.name ||
+                                                        "Unknown"}
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center gap-2 text-sm min-w-[140px]">
@@ -810,7 +786,8 @@ const AdminSchedule = () => {
                                                       />
                                                     </svg>
                                                     <span className="text-blue-700">
-                                                      {entry.teacher.name}
+                                                      {entry.teacher?.name ||
+                                                        "Unknown"}
                                                     </span>
                                                   </div>
                                                   <div className="flex items-center gap-2 text-sm">
@@ -876,7 +853,6 @@ const AdminSchedule = () => {
             </div>
           )}
 
-          {/* Save Button */}
           {adminData.div && adminData.year && selectedDay && (
             <div className="flex justify-center mt-8">
               <button
@@ -899,7 +875,6 @@ const AdminSchedule = () => {
             </div>
           )}
 
-          {/* Instructions */}
           <div className="mt-8 bg-white border border-blue-200 rounded-lg overflow-hidden">
             <div className="bg-blue-100 p-6">
               <h2 className="text-blue-900 font-semibold flex items-center gap-2">

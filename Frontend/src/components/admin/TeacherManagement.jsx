@@ -1,19 +1,18 @@
 import { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Search, X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import axios from "../../axios";
 
 const TeacherManager = () => {
   const [teachers, setTeachers] = useState([]);
   const [subjects, setSubjects] = useState([]);
+  const [batches, setBatches] = useState([]);
   const [formData, setFormData] = useState({
     name: "",
     ID_Name: "",
     password: "",
     batch: [],
     subjects: [],
-    batchInput: "",
-    subjectInput: "",
   });
   const [isAddTeacherOpen, setIsAddTeacherOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -22,6 +21,7 @@ const TeacherManager = () => {
   useEffect(() => {
     fetchTeachers();
     fetchSubjects();
+    fetchBatches();
   }, []);
 
   const fetchTeachers = async () => {
@@ -47,36 +47,27 @@ const TeacherManager = () => {
     }
   };
 
+  const fetchBatches = async () => {
+    try {
+      const adminId = localStorage.getItem("userId");
+      const res = await axios.get(
+        `http://localhost:8080/api/batches?adminId=${adminId}`
+      );
+      console.log("Fetched batches:", res.data);
+      setBatches(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error("Error fetching batches:", err);
+      setBatches([]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const adminId = localStorage.getItem("userId");
 
     try {
-      const subjectIds = formData.subjects
-        .map((inputName) => {
-          return subjects.find(
-            (s) =>
-              s.name?.toLowerCase().trim() === inputName.toLowerCase().trim()
-          )?._id;
-        })
-        .filter(Boolean);
-
-      const invalidSubjects = formData.subjects.filter(
-        (inputName) =>
-          !subjects.some(
-            (s) =>
-              s.name.toLowerCase().trim() === inputName.toLowerCase().trim()
-          )
-      );
-
-      if (invalidSubjects.length > 0) {
-        alert("❌ Invalid subject(s): " + invalidSubjects.join(", "));
-        return;
-      }
-
       const payload = {
         ...formData,
-        subjects: subjectIds,
         password: formData.password || "default123",
         adminId,
       };
@@ -96,8 +87,6 @@ const TeacherManager = () => {
         password: "",
         batch: [],
         subjects: [],
-        batchInput: "",
-        subjectInput: "",
       });
       setEditingId(null);
       alert("✅ Teacher successfully saved");
@@ -112,18 +101,20 @@ const TeacherManager = () => {
   };
 
   const handleDelete = async (id, name) => {
+    const adminId = localStorage.getItem("userId");
     const confirmed = window.confirm(
-      `🗑️ Are you sure you want to delete teacher "${name}"?`
+      `🗑️ Are you sure you want to remove teacher "${name}" from your administration?`
     );
     if (!confirmed) return;
 
     try {
-      await axios.delete(`/api/teacher/${id}`);
+      // Pass adminId as query parameter to only remove this admin's association
+      await axios.delete(`/api/teacher/${id}?adminId=${adminId}`);
       fetchTeachers();
-      alert(`✅ "${name}" was deleted successfully.`);
+      alert(`✅ "${name}" was removed from your administration successfully.`);
     } catch (error) {
       console.error("Delete failed:", error);
-      alert("❌ Failed to delete teacher.");
+      alert("❌ Failed to remove teacher.");
     }
   };
 
@@ -138,11 +129,60 @@ const TeacherManager = () => {
       subjects: Array.isArray(teacher.subjects)
         ? teacher.subjects.map((s) => (typeof s === "string" ? s : s._id))
         : [],
-      batchInput: (teacher.batch || []).join(", "),
-      subjectInput: (teacher.subjects || [])
-        .map((s) => (typeof s === "object" && s.name ? s.name : ""))
-        .join(", "),
     });
+  };
+
+  const handleBatchChange = (batchId) => {
+    setFormData((prev) => ({
+      ...prev,
+      batch: prev.batch.includes(batchId)
+        ? prev.batch.filter((id) => id !== batchId)
+        : [...prev.batch, batchId],
+    }));
+  };
+
+  const handleSubjectChange = (subjectId) => {
+    setFormData((prev) => ({
+      ...prev,
+      subjects: prev.subjects.includes(subjectId)
+        ? prev.subjects.filter((id) => id !== subjectId)
+        : [...prev.subjects, subjectId],
+    }));
+  };
+
+  const removeBatch = (batchId) => {
+    setFormData((prev) => ({
+      ...prev,
+      batch: prev.batch.filter((id) => id !== batchId),
+    }));
+  };
+
+  const removeSubject = (subjectId) => {
+    setFormData((prev) => ({
+      ...prev,
+      subjects: prev.subjects.filter((id) => id !== subjectId),
+    }));
+  };
+
+  const getBatchName = (batchItem) => {
+    if (typeof batchItem === "object" && batchItem.name) return batchItem.name;
+    const batch = batches.find(
+      (b) => b._id === batchItem || b.name === batchItem
+    );
+    return batch ? batch.name : batchItem;
+  };
+
+  const getSubjectName = (subjectId) => {
+    const subject = subjects.find((s) => s._id === subjectId);
+    return subject ? subject.name : subjectId;
+  };
+
+  // ✅ Check if current admin can edit/delete this teacher
+  const canEditTeacher = (teacher) => {
+    const currentAdminId = localStorage.getItem("userId");
+    return Array.isArray(teacher.admin)
+      ? teacher.admin.some((admin) => admin._id === currentAdminId)
+      : teacher.admin?._id === currentAdminId;
   };
 
   const filteredTeachers = (teachers || []).filter(
@@ -177,8 +217,6 @@ const TeacherManager = () => {
                 password: "",
                 batch: [],
                 subjects: [],
-                batchInput: "",
-                subjectInput: "",
               });
             }}
             className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
@@ -225,7 +263,7 @@ const TeacherManager = () => {
                     Subjects
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Admin
+                    Admins
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                     Actions
@@ -238,7 +276,9 @@ const TeacherManager = () => {
                     <td className="px-6 py-4">{teacher.name}</td>
                     <td className="px-6 py-4">{teacher.ID_Name}</td>
                     <td className="px-6 py-4">
-                      {(teacher.batch || []).join(", ")}
+                      {(teacher.batch || [])
+                        .map((batch) => getBatchName(batch))
+                        .join(", ")}
                     </td>
                     <td className="px-6 py-4">
                       {(teacher.subjects || [])
@@ -249,10 +289,15 @@ const TeacherManager = () => {
                         })
                         .join(", ")}
                     </td>
-                    <td className="px-6 py-4">{teacher.admin?.name || "-"}</td>
+                    <td className="px-6 py-4">
+                      {/* ✅ Display multiple admins */}
+                      {Array.isArray(teacher.admin)
+                        ? teacher.admin.map((admin) => admin.name).join(", ")
+                        : teacher.admin?.name || "-"}
+                    </td>
                     <td className="px-6 py-4 space-x-2">
-                      {teacher.admin?._id ===
-                        localStorage.getItem("userId") && (
+                      {/* ✅ Check if current admin can edit/delete */}
+                      {canEditTeacher(teacher) && (
                         <>
                           <button
                             onClick={() => handleEdit(teacher)}
@@ -284,7 +329,7 @@ const TeacherManager = () => {
         {/* Modal */}
         {isAddTeacherOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {editingId ? "Edit Teacher" : "Add New Teacher"}
               </h3>
@@ -300,7 +345,7 @@ const TeacherManager = () => {
                       setFormData({ ...formData, name: e.target.value })
                     }
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     placeholder="e.g. Prof. John Doe"
                   />
                 </div>
@@ -316,8 +361,8 @@ const TeacherManager = () => {
                       setFormData({ ...formData, ID_Name: e.target.value })
                     }
                     required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    placeholder="e.g. PROF001"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                    placeholder="e.g. DDP"
                   />
                 </div>
 
@@ -333,58 +378,98 @@ const TeacherManager = () => {
                         setFormData({ ...formData, password: e.target.value })
                       }
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                       placeholder="Set password"
                     />
                   </div>
                 )}
 
+                {/* Batches Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Batches (comma separated)
+                    Select Batches
                   </label>
-                  <input
-                    type="text"
-                    name="batchInput"
-                    value={formData.batchInput || ""}
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     onChange={(e) => {
-                      const inputValue = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        batchInput: inputValue,
-                        batch: inputValue
-                          .split(",")
-                          .map((b) => b.trim())
-                          .filter((b) => b),
-                      }));
-                    }}
-                    placeholder="e.g. B1, B2"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                      if (e.target.value) {
+                        handleBatchChange(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}>
+                    <option value="">Select a batch to add...</option>
+                    {batches
+                      .filter((batch) => !formData.batch.includes(batch._id))
+                      .map((batch) => (
+                        <option key={batch._id} value={batch._id}>
+                          {batch.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  {/* Selected Batches */}
+                  {formData.batch.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.batch.map((batchId) => (
+                        <span
+                          key={batchId}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
+                          {getBatchName(batchId)}
+                          <button
+                            type="button"
+                            onClick={() => removeBatch(batchId)}
+                            className="ml-2 text-blue-600 hover:text-blue-800">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
+                {/* Subjects Selection */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Subjects (comma separated)
+                    Select Subjects
                   </label>
-                  <input
-                    type="text"
-                    name="subjectInput"
-                    value={formData.subjectInput || ""}
+                  <select
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
                     onChange={(e) => {
-                      const inputValue = e.target.value;
-                      setFormData((prev) => ({
-                        ...prev,
-                        subjectInput: inputValue,
-                        subjects: inputValue
-                          .split(",")
-                          .map((s) => s.trim())
-                          .filter((s) => s),
-                      }));
-                    }}
-                    placeholder="e.g. Data Structures, DBMS"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                      if (e.target.value) {
+                        handleSubjectChange(e.target.value);
+                        e.target.value = "";
+                      }
+                    }}>
+                    <option value="">Select a subject to add...</option>
+                    {subjects
+                      .filter(
+                        (subject) => !formData.subjects.includes(subject._id)
+                      )
+                      .map((subject) => (
+                        <option key={subject._id} value={subject._id}>
+                          {subject.name}
+                        </option>
+                      ))}
+                  </select>
+
+                  {/* Selected Subjects */}
+                  {formData.subjects.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {formData.subjects.map((subjectId) => (
+                        <span
+                          key={subjectId}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
+                          {getSubjectName(subjectId)}
+                          <button
+                            type="button"
+                            onClick={() => removeSubject(subjectId)}
+                            className="ml-2 text-green-600 hover:text-green-800">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex space-x-2 pt-4">
@@ -394,12 +479,12 @@ const TeacherManager = () => {
                       setIsAddTeacherOpen(false);
                       setEditingId(null);
                     }}
-                    className="flex-1 px-4 py-2 border text-gray-600 rounded-md">
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 transition-colors">
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md">
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
                     {editingId ? "Update" : "Add"}
                   </button>
                 </div>

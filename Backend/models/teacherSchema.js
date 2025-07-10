@@ -11,7 +11,6 @@ const teacherSchema = new Schema({
     type: String,
     maxlength: 3,
     required: true,
-    unique: true, // ✅ Enforce uniqueness
   },
   password: {
     type: String,
@@ -20,18 +19,21 @@ const teacherSchema = new Schema({
   subjects: [
     {
       type: Schema.Types.ObjectId,
-      ref: "Subject", // ✅ assuming subject schema is named "Subject"
+      ref: "Subject",
     },
   ],
   batch: [
     {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Batch",
     },
   ],
-  admin: {
-    type: Schema.Types.ObjectId,
-    ref: "Admin",
-  },
+  admin: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Admin",
+    },
+  ], // ✅ Changed to array to support multiple admins
 });
 
 // Hash password before saving
