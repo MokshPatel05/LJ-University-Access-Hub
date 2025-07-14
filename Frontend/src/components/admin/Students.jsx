@@ -177,53 +177,125 @@ const StudentManagement = () => {
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          setLoading(true);
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: "array" });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-
-          const studentsToUpload = jsonData.map((row) => ({
-            name: row.name || row.Name || "",
-            enrollmentNumber:
-              row.enrollmentNumber || row["Enrollment Number"] || "",
-            rollNumber: row.rollNumber || row["Roll Number"] || "",
-            year: row.year || row.Year || "",
-            department: adminData.div,
-            batch: row.batch || row.Batch || "",
-          }));
-
-          const adminId = getAdminId();
-
-          // Using your existing bulk upload endpoint
-          const res = await axios.post(
-            "http://localhost:8080/api/students/bulk",
-            {
-              students: studentsToUpload,
-              adminId: adminData._id,
-            }
-          );
-
-          await Promise.all([fetchStudents(), fetchBatches()]);
-
-          setError(
-            res.data.errors
-              ? `${res.data.message}, ${res.data.errors.length} failed`
-              : res.data.message
-          );
-        } catch (error) {
-          console.error("Error uploading students:", error);
-          setError("Failed to upload students. Please check the file format.");
-        } finally {
-          setLoading(false);
-        }
-      };
-      reader.readAsArrayBuffer(file);
+    if (!file) {
+      setError("Please select a file to upload.");
+      return;
     }
+
+    // Check file type
+    const fileType = file.name.split('.').pop().toLowerCase();
+    if (!['xlsx', 'xls'].includes(fileType)) {
+      setError("Please select a valid Excel file (.xlsx or .xls)");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        
+        // Check if workbook has sheets
+        if (workbook.SheetNames.length === 0) {
+          throw new Error("Excel file has no sheets");
+        }
+        
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        console.log("Raw Excel data:", jsonData);
+        
+        // Skip header row and convert to objects
+        const headers = jsonData[0];
+        const dataRows = jsonData.slice(1);
+        
+        console.log("Headers:", headers);
+        console.log("Data rows:", dataRows);
+        
+        // Map headers to expected field names
+        const headerMap = {
+          'name': 'name',
+          'Name': 'name',
+          'enrollmentnumber': 'enrollmentNumber',
+          'Enrollment Number': 'enrollmentNumber',
+          'enrollmentNumber': 'enrollmentNumber',
+          'rollnumber': 'rollNumber',
+          'Roll Number': 'rollNumber',
+          'rollNumber': 'rollNumber',
+          'year': 'year',
+          'Year': 'year',
+          'batch': 'batch',
+          'Batch': 'batch'
+        };
+        
+        const studentsToUpload = dataRows
+          .filter(row => row.some(cell => cell !== null && cell !== undefined && cell !== ''))
+          .map((row, index) => {
+            const student = {};
+            
+            headers.forEach((header, colIndex) => {
+              const fieldName = headerMap[header?.toString().toLowerCase()];
+              if (fieldName && row[colIndex] !== null && row[colIndex] !== undefined) {
+                student[fieldName] = row[colIndex].toString().trim();
+              }
+            });
+            
+            // Add department from admin data
+            student.department = adminData.div;
+            
+            console.log(`Row ${index + 2}:`, student);
+            return student;
+          })
+          .filter(student => student.name && student.enrollmentNumber && student.rollNumber && student.year && student.batch);
+
+        console.log("Processed students:", studentsToUpload);
+        
+        if (studentsToUpload.length === 0) {
+          throw new Error("No valid student data found in the Excel file. Please check the column headers and data.");
+        }
+
+        if (!adminData?._id) {
+          throw new Error("Admin data not available. Please refresh the page.");
+        }
+
+        // Using your existing bulk upload endpoint
+        const res = await axios.post(
+          "http://localhost:8080/api/students/bulk",
+          {
+            students: studentsToUpload,
+            adminId: adminData._id,
+          }
+        );
+
+        console.log("Upload response:", res.data);
+
+        await Promise.all([fetchStudents(), fetchBatches()]);
+
+        if (res.data.errors && res.data.errors.length > 0) {
+          setError(`${res.data.message}. ${res.data.errors.length} rows failed. Check console for details.`);
+          console.log("Upload errors:", res.data.errors);
+        } else {
+          setError(`${res.data.message} - ${studentsToUpload.length} students uploaded successfully!`);
+        }
+      } catch (error) {
+        console.error("Error uploading students:", error);
+        setError(error.response?.data?.error || error.message || "Failed to upload students. Please check the file format and try again.");
+      } finally {
+        setLoading(false);
+        // Clear the file input
+        e.target.value = '';
+      }
+    };
+    
+    reader.onerror = () => {
+      setError("Error reading the file. Please try again.");
+      setLoading(false);
+    };
+    
+    reader.readAsArrayBuffer(file);
   };
 
   const deleteStudent = async (id) => {
@@ -267,9 +339,42 @@ const StudentManagement = () => {
             student.enrollmentNumber
               .toLowerCase()
               .includes(searchTerm.toLowerCase()) ||
+            student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.batch.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      .sort((a, b) => {
+        // Convert roll numbers to integers for proper numeric sorting
+        const rollA = parseInt(a.rollNumber) || 0;
+        const rollB = parseInt(b.rollNumber) || 0;
+        return rollA - rollB;
+      });
+  };
+
+  // Function to get students for a specific batch when viewing batch details
+  const getStudentsForSelectedBatch = () => {
+    if (!selectedBatch) return [];
+    
+    const filteredStudents = students
+      .filter(
+        (student) =>
+          student.batch === selectedBatch &&
+          student.department === adminData?.div &&
+          (searchTerm === "" ||
+            student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.enrollmentNumber
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
             student.rollNumber.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-      .sort((a, b) => a.name.localeCompare(b.name));
+      .sort((a, b) => {
+        // Convert roll numbers to integers for proper numeric sorting
+        const rollA = parseInt(a.rollNumber) || 0;
+        const rollB = parseInt(b.rollNumber) || 0;
+        return rollA - rollB;
+      });
+    
+    console.log(`Selected batch: ${selectedBatch}, Search term: "${searchTerm}", Found students: ${filteredStudents.length}`);
+    return filteredStudents;
   };
 
   const filteredBatches = getBatches().filter(
@@ -292,6 +397,43 @@ const StudentManagement = () => {
     return batches
       .filter((batch) => batch.department === adminData?.div)
       .sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  const downloadTemplate = () => {
+    // Create sample data for template
+    const templateData = [
+      {
+        name: "John Doe",
+        enrollmentNumber: "2024001",
+        rollNumber: "1",
+        year: "2",
+        batch: "B4"
+      },
+      {
+        name: "Jane Smith",
+        enrollmentNumber: "2024002", 
+        rollNumber: "2",
+        year: "2",
+        batch: "B4"
+      },
+      {
+        name: "Mike Johnson",
+        enrollmentNumber: "2024003",
+        rollNumber: "3", 
+        year: "2",
+        batch: "B4"
+      }
+    ];
+
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, "Students");
+    
+    // Generate and download file
+    XLSX.writeFile(wb, "student_upload_template.xlsx");
   };
 
   return (
@@ -374,6 +516,12 @@ const StudentManagement = () => {
                     className="hidden"
                   />
                 </label>
+                
+                <button
+                  onClick={() => downloadTemplate()}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                  <span>Download Template</span>
+                </button>
               </div>
 
               <div className="flex items-center space-x-4">
@@ -393,13 +541,29 @@ const StudentManagement = () => {
 
                 {selectedBatch && (
                   <button
-                    onClick={() => setSelectedBatch(null)}
+                    onClick={() => {
+                      setSelectedBatch(null);
+                      setSearchTerm("");
+                    }}
                     className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
                     <X size={16} />
                     <span>Back to Batches</span>
                   </button>
                 )}
               </div>
+            </div>
+            
+            {/* Excel Upload Instructions */}
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-blue-800 mb-2">Excel Upload Instructions:</h3>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• Download the template to see the correct format</li>
+                <li>• Required columns: name, enrollmentNumber, rollNumber, year, batch</li>
+                <li>• Year should be 1, 2, 3, or 4</li>
+                <li>• Batch should match existing batch names (e.g., "B4")</li>
+                <li>• Enrollment numbers must be unique</li>
+                <li>• Department will be automatically set to your department</li>
+              </ul>
             </div>
           </div>
 
@@ -541,7 +705,11 @@ const StudentManagement = () => {
               {filteredBatches.map((batch) => (
                 <div
                   key={batch.name}
-                  onClick={() => setSelectedBatch(batch.name)}
+                  onClick={() => {
+                    setSelectedBatch(batch.name);
+                    // Clear search when selecting a batch for better UX
+                    setSearchTerm("");
+                  }}
                   className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow cursor-pointer border border-gray-200 hover:border-blue-300">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
@@ -617,7 +785,7 @@ const StudentManagement = () => {
                       Batch {selectedBatch}
                     </h2>
                     <p className="text-gray-600">
-                      {getStudentsByBatch(selectedBatch).length} students
+                      {getStudentsForSelectedBatch().length} students
                     </p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -653,7 +821,7 @@ const StudentManagement = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {getStudentsByBatch(selectedBatch).map((student) => (
+                    {getStudentsForSelectedBatch().map((student) => (
                       <tr key={student._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
@@ -699,7 +867,7 @@ const StudentManagement = () => {
                   </tbody>
                 </table>
 
-                {getStudentsByBatch(selectedBatch).length === 0 && (
+                {getStudentsForSelectedBatch().length === 0 && (
                   <div className="text-center py-12">
                     <Users className="mx-auto text-gray-400 mb-4" size={48} />
                     <h3 className="text-lg font-medium text-gray-600 mb-2">

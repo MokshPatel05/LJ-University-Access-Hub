@@ -4,6 +4,7 @@ const Teacher = require("../models/teacherSchema");
 const Subject = require("../models/subjectSchema");
 const Admin = require("../models/adminSchema");
 const Schedule = require("../models/scheduleSchema");
+const Batch = require("../models/batchSchema");
 
 //<================================= ADMIN PANEL ROUTES ========================================>
 
@@ -254,8 +255,21 @@ router.get("/:id/dashboard", async (req, res) => {
       teacher: teacherId,
       day: todayDay,
     })
-      .populate("subject", "name")
-      .populate("batch", "name");
+      .populate("subject", "name");
+
+    // Get batch names for the schedule entries
+    const batchIds = [...new Set(todaySchedule.map(schedule => schedule.batch))];
+    const batches = await Batch.find({ _id: { $in: batchIds } });
+    const batchMap = {};
+    batches.forEach(batch => {
+      batchMap[batch._id.toString()] = batch.name;
+    });
+
+    // Add batch names to schedule entries
+    const scheduleWithBatchNames = todaySchedule.map(schedule => ({
+      ...schedule.toObject(),
+      batch: { name: batchMap[schedule.batch] || schedule.batch }
+    }));
 
     const weeklyScheduleCount = await Schedule.countDocuments({
       teacher: teacherId,
@@ -263,10 +277,10 @@ router.get("/:id/dashboard", async (req, res) => {
 
     res.status(200).json({
       name: teacher.name, // Dynamic name!
-      todaySchedule,
+      todaySchedule: scheduleWithBatchNames,
       stats: {
         totalClassesWeek: weeklyScheduleCount,
-        classesToday: todaySchedule.length,
+        classesToday: scheduleWithBatchNames.length,
         studentsTaught: 0,
       },
     });
@@ -296,8 +310,15 @@ router.get("/:id/weekly-schedule", async (req, res) => {
 
     for (const day of daysOfWeek) {
       let classes = await Schedule.find({ teacher: teacherId, day })
-        .populate("subject", "name")
-        .populate("batch", "name");
+        .populate("subject", "name");
+
+      // Get batch names for all classes
+      const batchIds = [...new Set(classes.map(cls => cls.batch))];
+      const batches = await Batch.find({ _id: { $in: batchIds } });
+      const batchMap = {};
+      batches.forEach(batch => {
+        batchMap[batch._id.toString()] = batch.name;
+      });
 
       // Sort by start time
       classes.sort((a, b) => {
@@ -309,7 +330,7 @@ router.get("/:id/weekly-schedule", async (req, res) => {
       weeklySchedule[day] = classes.map((cls) => ({
         time: cls.time,
         subject: cls.subject?.name || "Unknown",
-        batch: cls.batch?.name || "Unknown",
+        batch: batchMap[cls.batch] || cls.batch || "Unknown",
         room: cls.room,
       }));
     }

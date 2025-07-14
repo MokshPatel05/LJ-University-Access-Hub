@@ -73,7 +73,7 @@ const Schedule = () => {
                             className="p-3 border border-gray-200 rounded-lg bg-gray-50">
                             <div className="flex items-center justify-between mb-2">
                               <h3 className="font-semibold text-gray-900">
-                                {cls.subject?.name || "Subject"}
+                                {cls.subject || "Subject"}
                               </h3>
                             </div>
                             <div className="space-y-1 text-sm text-gray-600">

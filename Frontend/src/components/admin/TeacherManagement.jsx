@@ -400,6 +400,7 @@ const TeacherManager = () => {
                     <option value="">Select a batch to add...</option>
                     {batches
                       .filter((batch) => !formData.batch.includes(batch._id))
+                      .sort((a, b) => a.name.localeCompare(b.name))
                       .map((batch) => (
                         <option key={batch._id} value={batch._id}>
                           {batch.name}
