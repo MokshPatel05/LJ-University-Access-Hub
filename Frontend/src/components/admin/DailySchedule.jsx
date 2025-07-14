@@ -74,10 +74,10 @@ const AdminSchedule = () => {
           "http://localhost:8080/api/batches",
           {
             headers: { "user-id": userId },
-            params: { year, department: div }, // Filter by department
+            params: { year, department: div },
           }
         );
-        console.log("Fetched batches:", batchesResponse.data); // Debug log
+        console.log("Fetched batches:", batchesResponse.data);
         setBatches(batchesResponse.data);
 
         // Fetch subjects for the admin's year
@@ -88,7 +88,7 @@ const AdminSchedule = () => {
             params: { year },
           }
         );
-        console.log("Fetched subjects:", subjectsResponse.data); // Debug log
+        console.log("Fetched subjects:", subjectsResponse.data);
         setSubjects(subjectsResponse.data);
 
         // Fetch schedule
@@ -105,33 +105,64 @@ const AdminSchedule = () => {
     fetchData();
   }, []);
 
+  // Updated useEffect for fetching teachers in DailySchedule.jsx
   useEffect(() => {
     if (selectedBatch && selectedSubject && adminData.div) {
       const fetchTeachers = async () => {
         try {
           const userId = localStorage.getItem("userId");
+          const selectedSubjectObj = subjects.find(
+            (s) => s.name === selectedSubject
+          );
+
+          // Validate subject
+          if (!selectedSubjectObj) {
+            console.error(
+              "Selected subject not found:",
+              selectedSubject,
+              subjects
+            );
+            setError(
+              "Selected subject is invalid. Please choose a valid subject."
+            );
+            setTeachers([]);
+            return;
+          }
+
+          console.log("Fetching teachers with params:", {
+            batch: selectedBatch,
+            subject: selectedSubjectObj._id,
+            adminId: userId,
+          });
+
           const response = await axios.get(
-            "http://localhost:8080/api/teachers",
+            "http://localhost:8080/api/teacher",
             {
               headers: { "user-id": userId },
               params: {
                 batch: selectedBatch,
-                subject: subjects.find((s) => s.name === selectedSubject)?._id,
-                adminDiv: adminData.div,
+                subject: selectedSubjectObj._id,
+                adminId: userId, // Add adminId to ensure proper filtering
               },
             }
           );
-          console.log("Fetched teachers:", response.data); // Debug log
-          setTeachers(response.data);
+
+          console.log("Fetched teachers:", response.data);
+          setTeachers(Array.isArray(response.data) ? response.data : []);
+
+          // Clear any previous errors
+          setError(null);
         } catch (err) {
+          console.error("Error fetching teachers:", err);
           setError(err.response?.data?.message || "Failed to load teachers");
+          setTeachers([]);
         }
       };
       fetchTeachers();
     } else {
       setTeachers([]);
     }
-  }, [selectedBatch, selectedSubject, adminData.div]);
+  }, [selectedBatch, selectedSubject, adminData.div, subjects]);
 
   const fetchSchedule = async (department, year) => {
     try {
@@ -140,10 +171,10 @@ const AdminSchedule = () => {
         headers: { "user-id": userId },
         params: { department, year },
       });
-      console.log("Fetched schedule:", response.data); // Debug log
+      console.log("Fetched schedule:", response.data);
       setScheduleData(Array.isArray(response.data) ? response.data : []);
       if (response.data.length > 0 && batches.length > 0) {
-        setActiveTab(batches[0]._id); // Set first batch as active tab
+        setActiveTab(batches[0]._id);
       }
     } catch (err) {
       console.error("Error fetching schedule:", err);
@@ -191,11 +222,23 @@ const AdminSchedule = () => {
         { entries: [newEntry] },
         { headers: { "user-id": userId } }
       );
-      console.log("Added schedule entry:", response.data); // Debug log
-      setScheduleData([
-        ...scheduleData,
-        { ...newEntry, _id: response.data.saved[0]._id },
-      ]);
+      console.log("Added schedule entry:", response.data);
+      
+      // Create a properly populated entry for the state
+      const populatedEntry = {
+        _id: response.data.saved[0]._id,
+        day: selectedDay,
+        department: adminData.div,
+        year: adminData.year,
+        batch: selectedBatch,
+        admin: userId,
+        time: timeSlots.find((slot) => slot.id === selectedTimeSlot)?.time,
+        subject: { name: selectedSubjectObj.name, _id: selectedSubjectObj._id }, // Structure like populated data
+        teacher: { name: selectedTeacherObj.name, _id: selectedTeacherObj._id }, // Structure like populated data
+        room: selectedRoom,
+      };
+      
+      setScheduleData([...scheduleData, populatedEntry]);
       setSelectedTimeSlot("");
       setSelectedSubject("");
       setSelectedTeacher("");
@@ -246,7 +289,6 @@ const AdminSchedule = () => {
   };
 
   const getBatchArray = () => {
-    // Filter batches by admin's department (as a fallback)
     return batches
       .filter(
         (batch) => batch.department === adminData.div || !batch.department
@@ -299,10 +341,6 @@ const AdminSchedule = () => {
     return <div className="text-center py-10">Loading...</div>;
   }
 
-  if (error) {
-    return <div className="text-center py-10 text-red-600">{error}</div>;
-  }
-
   return (
     <div className="flex min-h-screen mt-16 bg-gradient-to-br from-blue-50 to-white">
       <div className="w-64 flex-shrink-0 bg-white border-r border-blue-200">
@@ -316,6 +354,17 @@ const AdminSchedule = () => {
               Admin Panel - Schedule Management
             </p>
           </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
+              {error}
+              <button
+                onClick={() => setError(null)}
+                className="ml-4 text-sm underline">
+                Clear Error
+              </button>
+            </div>
+          )}
 
           <div className="mb-8 bg-white border border-blue-200 shadow-lg rounded-lg overflow-hidden">
             <div className="bg-blue-600 text-white p-6">
@@ -502,11 +551,17 @@ const AdminSchedule = () => {
                         onChange={(e) => setSelectedSubject(e.target.value)}
                         className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option value="">Select Subject</option>
-                        {subjects.map((subject) => (
-                          <option key={subject._id} value={subject.name}>
-                            {subject.name}
+                        {subjects.length > 0 ? (
+                          subjects.map((subject) => (
+                            <option key={subject._id} value={subject.name}>
+                              {subject.name}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No subjects available
                           </option>
-                        ))}
+                        )}
                       </select>
                     </div>
 
@@ -519,11 +574,17 @@ const AdminSchedule = () => {
                         onChange={(e) => setSelectedTeacher(e.target.value)}
                         className="w-full border border-blue-200 rounded-md px-3 py-2 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
                         <option value="">Select Teacher</option>
-                        {teachers.map((teacher) => (
-                          <option key={teacher._id} value={teacher.name}>
-                            {teacher.name}
+                        {teachers.length > 0 ? (
+                          teachers.map((teacher) => (
+                            <option key={teacher._id} value={teacher.name}>
+                              {teacher.name}
+                            </option>
+                          ))
+                        ) : (
+                          <option value="" disabled>
+                            No teachers available
                           </option>
-                        ))}
+                        )}
                       </select>
                     </div>
 

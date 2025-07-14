@@ -7,22 +7,66 @@ const Schedule = require("../models/scheduleSchema");
 
 //<================================= ADMIN PANEL ROUTES ========================================>
 
-// Get all teachers (optionally filtered by admin)
+// Complete updated GET route in teacher.js
 router.get("/", async (req, res) => {
   try {
-    const { adminId } = req.query;
+    const { adminId, batch, subject, adminDiv } = req.query;
 
-    const filter = adminId ? { admin: adminId } : {};
+    console.log("Teacher search params:", {
+      adminId,
+      batch,
+      subject,
+      adminDiv,
+    });
 
-    const teachers = await Teacher.find(filter)
+    // Build base filter
+    let filter = {};
+
+    // Filter by admin if provided - use $in since admin is an array
+    if (adminId) {
+      filter.admin = { $in: [adminId] };
+    }
+
+    console.log("Base filter:", filter);
+
+    // Get all teachers matching the base filter first
+    let teachers = await Teacher.find(filter)
       .populate("subjects", "name")
-      .populate("batch", "name") // 👈 Add this
+      .populate("batch", "name")
       .populate("admin", "name");
+
+    console.log("All teachers found:", teachers.length);
+
+    // Now filter by batch and subject if provided
+    if (batch || subject) {
+      teachers = teachers.filter((teacher) => {
+        let matchesBatch = true;
+        let matchesSubject = true;
+
+        // Check batch match
+        if (batch) {
+          matchesBatch = teacher.batch.some((b) => b._id.toString() === batch);
+        }
+
+        // Check subject match
+        if (subject) {
+          matchesSubject = teacher.subjects.some(
+            (s) => s._id.toString() === subject
+          );
+        }
+
+        return matchesBatch && matchesSubject;
+      });
+    }
+
+    console.log("Filtered teachers:", teachers.length);
 
     res.status(200).json(teachers);
   } catch (err) {
     console.error("Error fetching teachers:", err);
-    res.status(500).json({ message: "Failed to fetch teachers" });
+    res
+      .status(500)
+      .json({ message: "Failed to fetch teachers", error: err.message });
   }
 });
 
