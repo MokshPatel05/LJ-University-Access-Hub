@@ -54,4 +54,15 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+// Get all batches
+router.get("/", async (req, res) => {
+  try {
+    const batches = await Batch.find().populate("students");
+    res.json(batches);
+  } catch (err) {
+    console.error("Error fetching batches:", err);
+    res.status(500).json({ error: "Error fetching batches" });
+  }
+});
+
 module.exports = router;

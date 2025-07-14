@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import useUserId from "../../hooks/useUserId";
+import { FaAddressCard } from "react-icons/fa6";
 
 const Sidebar = () => {
   const userId = useUserId(); // get the user's id
@@ -57,6 +58,15 @@ const Sidebar = () => {
             style={{ color: "#4B5563" }}>
             <i className="fa-solid fa-graduation-cap fa-lg pr-2"></i>
             Batch Management
+          </Link>
+        </div>
+        <div>
+          <Link
+            to={`/adminDash/${userId}/students`}
+            className={linkClasses}
+            style={{ color: "#4B5563" }}>
+            <i class="fa-solid fa-address-card fa-lg pr-2"></i>
+            Students Management
           </Link>
         </div>
       </div>

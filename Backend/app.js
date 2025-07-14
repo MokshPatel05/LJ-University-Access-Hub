@@ -8,11 +8,13 @@ const Teacher = require("./models/teacherSchema");
 const Admin = require("./models/adminSchema");
 const Batch = require("./models/batchSchema");
 const Schedule = require("./models/scheduleSchema");
+const Student = require("./models/studentSchema");
 const batchRoutes = require("./routes/batch");
 const teacherRoutes = require("./routes/teacher");
 const subjectRoutes = require("./routes/subject");
 const scheduleRoutes = require("./routes/schedule");
 const apiRoutes = require("./routes/api");
+const studentRoutes = require("./routes/students");
 
 const path = require("path");
 const methodOverride = require("method-override");
@@ -39,6 +41,7 @@ app.use("/api/subjects", subjectRoutes);
 app.use("/api/schedule", require("./routes/schedule"));
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api", apiRoutes);
+app.use("/api/students", studentRoutes);
 
 // MongoDB connection
 const dburl = process.env.MONGO_URL;

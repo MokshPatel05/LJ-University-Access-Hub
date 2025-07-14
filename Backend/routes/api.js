@@ -8,7 +8,8 @@ const Teacher = require("../models/teacherSchema");
 
 // Middleware to verify user (assuming userId is sent in headers or body)
 const verifyUser = async (req, res, next) => {
-  const userId = req.headers["user-id"] || req.body.userId;
+  const userId =
+    req.headers["user-id"] || req.body.userId || req.params.adminId;
   if (!userId) {
     return res.status(401).json({ message: "User ID required" });
   }
@@ -16,7 +17,7 @@ const verifyUser = async (req, res, next) => {
   next();
 };
 
-// Get admin data
+// Get admin data - Option 1: Using existing route with headers
 router.get("/admin/me", verifyUser, async (req, res) => {
   try {
     const admin = await Admin.findById(req.userId).select("name div year");
@@ -30,10 +31,33 @@ router.get("/admin/me", verifyUser, async (req, res) => {
   }
 });
 
-// Get batches by year
-router.get("/batches", verifyUser, async (req, res) => {
+// Get admin data - Option 2: Using admin ID as URL parameter
+router.get("/admin/:adminId", async (req, res) => {
   try {
+    const { adminId } = req.params;
+    const admin = await Admin.findById(adminId).select("name div year");
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    res.status(200).json(admin);
+  } catch (err) {
+    console.error("Error fetching admin:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Get batches by year and admin
+router.get("/batches/:adminId", async (req, res) => {
+  try {
+    const { adminId } = req.params;
     const { year } = req.query;
+
+    // First get admin to verify and get their division
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
     const batches = await Batch.find({ year }).select("name department year");
     res.status(200).json(batches);
   } catch (err) {
@@ -42,10 +66,18 @@ router.get("/batches", verifyUser, async (req, res) => {
   }
 });
 
-// Get subjects by year
-router.get("/subjects", verifyUser, async (req, res) => {
+// Get subjects by year and admin
+router.get("/subjects/:adminId", async (req, res) => {
   try {
+    const { adminId } = req.params;
     const { year } = req.query;
+
+    // Verify admin exists
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
     const subjects = await Subject.find({ year }).select("name year");
     res.status(200).json(subjects);
   } catch (err) {
@@ -55,13 +87,20 @@ router.get("/subjects", verifyUser, async (req, res) => {
 });
 
 // Get teachers by batch + subject + admin's department
-router.get("/teachers", verifyUser, async (req, res) => {
+router.get("/teachers/:adminId", async (req, res) => {
   try {
+    const { adminId } = req.params;
     const { batch, subject, adminDiv } = req.query;
+
+    // Verify admin exists
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
 
     const query = {
       batch: batch,
-      admin: req.userId,
+      admin: adminId,
     };
 
     if (subject) {

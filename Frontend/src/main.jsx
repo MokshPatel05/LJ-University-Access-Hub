@@ -1,6 +1,12 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useEffect } from "react"; // ✅ keep this — you're using it inside AppLayout
 import "./index.css";
 
@@ -20,13 +26,15 @@ import BatchManagement from "./components/admin/BatchManagement";
 import PageNotFund from "./components/PageNotFound";
 import ResetPassword from "./components/ResetPassword";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import StudentManagement from "./components/admin/Students";
 
 function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate(); // ✅ safer than window.location.href
 
   const isAuthPage =
-    location.pathname === "/auth/login" || location.pathname === "/reset-password";
+    location.pathname === "/auth/login" ||
+    location.pathname === "/reset-password";
 
   useEffect(() => {
     const lastLogin = localStorage.getItem("lastLoginTime");
@@ -115,6 +123,14 @@ function AppLayout() {
           element={
             <ProtectedRoute allowedRole="admin">
               <BatchManagement />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/adminDash/:id/students"
+          element={
+            <ProtectedRoute allowedRole="admin">
+              <StudentManagement />
             </ProtectedRoute>
           }
         />

@@ -3,6 +3,9 @@ const router = express.Router();
 const Teacher = require("../models/teacherSchema");
 const Subject = require("../models/subjectSchema");
 const Admin = require("../models/adminSchema");
+const Schedule = require("../models/scheduleSchema");
+
+//<================================= ADMIN PANEL ROUTES ========================================>
 
 // Get all teachers (optionally filtered by admin)
 router.get("/", async (req, res) => {
@@ -187,6 +190,90 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error("Error deleting teacher:", err);
     res.status(500).json({ message: "Error deleting teacher" });
+  }
+});
+
+// <================================= TEACHER PANEL ROUTES ========================================>
+
+// GET /api/teacher/:id/dashboard
+router.get("/:id/dashboard", async (req, res) => {
+  const teacherId = req.params.id;
+  const todayDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+  try {
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    const todaySchedule = await Schedule.find({
+      teacher: teacherId,
+      day: todayDay,
+    })
+      .populate("subject", "name")
+      .populate("batch", "name");
+
+    const weeklyScheduleCount = await Schedule.countDocuments({
+      teacher: teacherId,
+    });
+
+    res.status(200).json({
+      name: teacher.name, // Dynamic name!
+      todaySchedule,
+      stats: {
+        totalClassesWeek: weeklyScheduleCount,
+        classesToday: todaySchedule.length,
+        studentsTaught: 0,
+      },
+    });
+  } catch (err) {
+    console.error("Dashboard error:", err);
+    res.status(500).json({ message: "Error fetching dashboard data" });
+  }
+});
+
+// Helper: convert "09:00 AM" → minutes since midnight
+function parseStartTime(timeRange) {
+  const [startTime] = timeRange.split(" - ");
+  const [time, modifier] = startTime.split(" ");
+  let [hours, minutes] = time.split(":").map(Number);
+  if (modifier === "PM" && hours !== 12) hours += 12;
+  if (modifier === "AM" && hours === 12) hours = 0;
+  return hours * 60 + minutes;
+}
+
+// GET /api/teacher/:id/weekly-schedule
+router.get("/:id/weekly-schedule", async (req, res) => {
+  const teacherId = req.params.id;
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+
+  try {
+    const weeklySchedule = {};
+
+    for (const day of daysOfWeek) {
+      let classes = await Schedule.find({ teacher: teacherId, day })
+        .populate("subject", "name")
+        .populate("batch", "name");
+
+      // Sort by start time
+      classes.sort((a, b) => {
+        const aStart = parseStartTime(a.time);
+        const bStart = parseStartTime(b.time);
+        return aStart - bStart;
+      });
+
+      weeklySchedule[day] = classes.map((cls) => ({
+        time: cls.time,
+        subject: cls.subject?.name || "Unknown",
+        batch: cls.batch?.name || "Unknown",
+        room: cls.room,
+      }));
+    }
+
+    res.status(200).json(weeklySchedule);
+  } catch (err) {
+    console.error("Error fetching weekly schedule:", err);
+    res.status(500).json({ message: "Failed to fetch weekly schedule" });
   }
 });
 
