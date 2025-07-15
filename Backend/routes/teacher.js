@@ -11,63 +11,52 @@ const Batch = require("../models/batchSchema");
 // Complete updated GET route in teacher.js
 router.get("/", async (req, res) => {
   try {
-    const { adminId, batch, subject, adminDiv } = req.query;
-
-    console.log("Teacher search params:", {
-      adminId,
-      batch,
-      subject,
-      adminDiv,
-    });
-
-    // Build base filter
-    let filter = {};
-
-    // Filter by admin if provided - use $in since admin is an array
-    if (adminId) {
-      filter.admin = { $in: [adminId] };
+    const { adminId, batch, subject } = req.query;
+    if (!adminId) {
+      return res.status(400).json({ message: "adminId is required" });
     }
 
-    console.log("Base filter:", filter);
+    // 1. Get admin's year and div
+    const admin = await Admin.findById(adminId);
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    const { year, div } = admin;
 
-    // Get all teachers matching the base filter first
-    let teachers = await Teacher.find(filter)
+    // 2. Find all batches for this year and div
+    const batches = await Batch.find({ year: String(year), department: div });
+    const batchIds = batches.map(b => b._id);
+
+    // 3. Find all teachers who teach in these batches
+    let teachers = await Teacher.find({ batch: { $in: batchIds } })
       .populate("subjects", "name")
       .populate("batch", "name")
       .populate("admin", "name");
 
-    console.log("All teachers found:", teachers.length);
-
-    // Now filter by batch and subject if provided
+    // 4. Filter by selected batch and subject if provided
     if (batch || subject) {
       teachers = teachers.filter((teacher) => {
         let matchesBatch = true;
         let matchesSubject = true;
 
-        // Check batch match
         if (batch) {
-          matchesBatch = teacher.batch.some((b) => b._id.toString() === batch);
+          matchesBatch = teacher.batch.some(
+            (b) => b._id.toString() === batch
+          );
         }
-
-        // Check subject match
         if (subject) {
           matchesSubject = teacher.subjects.some(
             (s) => s._id.toString() === subject
           );
         }
-
         return matchesBatch && matchesSubject;
       });
     }
 
-    console.log("Filtered teachers:", teachers.length);
-
     res.status(200).json(teachers);
   } catch (err) {
     console.error("Error fetching teachers:", err);
-    res
-      .status(500)
-      .json({ message: "Failed to fetch teachers", error: err.message });
+    res.status(500).json({ message: "Failed to fetch teachers", error: err.message });
   }
 });
 

@@ -18,14 +18,15 @@ async function main() {
 
 // Sample subjects (without teacher refs yet)
 const subjectData = [
-  { year: 1, name: "Introduction to Programming" },
-  { year: 1, name: "Engineering Mathematics" },
-  { year: 2, name: "Data Structures" },
-  { year: 2, name: "Computer Networks" },
-  { year: 3, name: "Operating Systems" },
-  { year: 3, name: "Database Management Systems" },
-  { year: 4, name: "Machine Learning" },
-  { year: 4, name: "Cloud Computing" },
+  { year: 2, name: "DM" },
+  { year: 2, name: "FSD-2" },
+  { year: 2, name: "Python-2" },
+  { year: 2, name: "COA" },
+  { year: 2, name: "TOC" },
+  { year: 2, name: "PS" },
+  { year: 2, name: "DE" },
+  { year: 2, name: "FSD-1" },
+  { year: 2, name: "Python-1" },
 ];
 
 // Insert data

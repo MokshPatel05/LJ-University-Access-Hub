@@ -315,8 +315,6 @@ const AttendanceDownload = () => {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-
-    console.log("Generated attendance sheet CSV for:", dayData.date);
   };
 
   const handleIndividualDownload = (submission) => {

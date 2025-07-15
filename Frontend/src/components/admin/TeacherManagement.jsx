@@ -28,7 +28,6 @@ const TeacherManager = () => {
     try {
       const adminId = localStorage.getItem("userId");
       const res = await axios.get(`/api/teacher?adminId=${adminId}`);
-      console.log("Fetched teachers:", res.data);
       setTeachers(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Error fetching teachers:", error);
@@ -39,7 +38,6 @@ const TeacherManager = () => {
   const fetchSubjects = async () => {
     try {
       const res = await axios.get("http://localhost:8080/api/subjects");
-      console.log("Fetched subjects:", res.data);
       setSubjects(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error fetching subjects:", err);
@@ -50,10 +48,13 @@ const TeacherManager = () => {
   const fetchBatches = async () => {
     try {
       const adminId = localStorage.getItem("userId");
+      // Fetch admin's year
+      const adminRes = await axios.get(`/api/admin/${adminId}`);
+      const { year } = adminRes.data;
+      // Fetch batches for this admin's year
       const res = await axios.get(
-        `http://localhost:8080/api/batches?adminId=${adminId}`
+        `http://localhost:8080/api/batches/${adminId}?year=${year}`
       );
-      console.log("Fetched batches:", res.data);
       setBatches(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Error fetching batches:", err);

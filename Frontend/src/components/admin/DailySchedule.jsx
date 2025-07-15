@@ -12,18 +12,14 @@ const timeSlots = [
 ];
 
 const rooms = [
-  "Room A-101",
-  "Room A-102",
-  "Room A-103",
-  "Room B-201",
-  "Room B-202",
-  "Room B-203",
-  "Lab-1",
-  "Lab-2",
-  "Lab-3",
-  "Seminar Hall-1",
-  "Seminar Hall-2",
-  "Library Hall",
+  "403",
+  "404",
+  "405",
+  "406-1",
+  "406-3",
+  "406-4",
+  "407",
+  "409"
 ];
 
 const days = [
@@ -77,7 +73,6 @@ const AdminSchedule = () => {
             params: { year, department: div },
           }
         );
-        console.log("Fetched batches:", batchesResponse.data);
         setBatches(batchesResponse.data);
 
         // Fetch subjects for the admin's year
@@ -88,7 +83,6 @@ const AdminSchedule = () => {
             params: { year },
           }
         );
-        console.log("Fetched subjects:", subjectsResponse.data);
         setSubjects(subjectsResponse.data);
 
         // Fetch schedule
@@ -129,12 +123,6 @@ const AdminSchedule = () => {
             return;
           }
 
-          console.log("Fetching teachers with params:", {
-            batch: selectedBatch,
-            subject: selectedSubjectObj._id,
-            adminId: userId,
-          });
-
           const response = await axios.get(
             "http://localhost:8080/api/teacher",
             {
@@ -147,8 +135,15 @@ const AdminSchedule = () => {
             }
           );
 
-          console.log("Fetched teachers:", response.data);
-          setTeachers(Array.isArray(response.data) ? response.data : []);
+          const teacherList = Array.isArray(response.data) ? response.data : [];
+          setTeachers(teacherList);
+
+          // Auto-select if only one teacher
+          if (teacherList.length === 1) {
+            setSelectedTeacher(teacherList[0].name);
+          } else {
+            setSelectedTeacher("");
+          }
 
           // Clear any previous errors
           setError(null);
@@ -156,11 +151,13 @@ const AdminSchedule = () => {
           console.error("Error fetching teachers:", err);
           setError(err.response?.data?.message || "Failed to load teachers");
           setTeachers([]);
+          setSelectedTeacher("");
         }
       };
       fetchTeachers();
     } else {
       setTeachers([]);
+      setSelectedTeacher("");
     }
   }, [selectedBatch, selectedSubject, adminData.div, subjects]);
 
@@ -171,7 +168,6 @@ const AdminSchedule = () => {
         headers: { "user-id": userId },
         params: { department, year },
       });
-      console.log("Fetched schedule:", response.data);
       setScheduleData(Array.isArray(response.data) ? response.data : []);
       if (response.data.length > 0 && batches.length > 0) {
         setActiveTab(batches[0]._id);
@@ -222,7 +218,6 @@ const AdminSchedule = () => {
         { entries: [newEntry] },
         { headers: { "user-id": userId } }
       );
-      console.log("Added schedule entry:", response.data);
       
       // Create a properly populated entry for the state
       const populatedEntry = {

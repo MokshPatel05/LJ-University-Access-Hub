@@ -21,69 +21,12 @@ async function main() {
   await mongoose.connect(dburl);
 }
 
-const rawTeacherData = [
-  {
-    name: "Amit Patel",
-    ID_Name: "APT",
-    password: "teach123",
-    subjects: ["Introduction to Programming"],
-    batch: ["B4"],
-  },
-  {
-    name: "Sneha Shah",
-    ID_Name: "SSH",
-    password: "teach123",
-    subjects: ["Engineering Mathematics"],
-    batch: ["B4"],
-  },
-  {
-    name: "Ravi Mehta",
-    ID_Name: "RMT",
-    password: "teach123",
-    subjects: ["Data Structures", "Engineering Mathematics"],
-    batch: ["B4"],
-  },
-  {
-    name: "Neha Desai",
-    ID_Name: "NDS",
-    password: "teach123",
-    subjects: ["Computer Networks"],
-    batch: ["B4"],
-  },
-  {
-    name: "Karan Bhatt",
-    ID_Name: "KBT",
-    password: "teach123",
-    subjects: ["Operating Systems"],
-    batch: ["B4"],
-  },
-  {
-    name: "Pooja Trivedi",
-    ID_Name: "PTD",
-    password: "teach123",
-    subjects: ["Database Management Systems"],
-    batch: ["B4"],
-  },
-  {
-    name: "Yash Rajput",
-    ID_Name: "YRP",
-    password: "teach123",
-    subjects: ["Machine Learning"],
-    batch: ["B4"],
-  },
-  {
-    name: "Disha Patel",
-    ID_Name: "DPT",
-    password: "teach123",
-    subjects: ["Cloud Computing"],
-    batch: ["B4"],
-  },
-];
+const rawTeacherData = [];
 
 async function insertTeacherData() {
   try {
     const adminId = "68678d8ed864520bdc2a32f8"; // ✅ Replace with real Admin ID
-
+    
     const admin = await Admin.findById(adminId);
     if (!admin) throw new Error("Admin ID not found in DB");
 

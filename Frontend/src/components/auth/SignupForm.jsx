@@ -46,16 +46,6 @@ function SignupForm() {
       alert("Passwords do not match!");
       return;
     }
-    console.log("Form submitted:", {
-      email,
-      password,
-      selectedRole,
-      year,
-      semester,
-      department,
-      firstName,
-      lastName,
-    });
   };
 
   const handleYearChange = (event) => {

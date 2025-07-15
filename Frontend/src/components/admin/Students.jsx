@@ -144,8 +144,6 @@ const StudentManagement = () => {
         adminId: adminData._id,
       };
 
-      console.log("Sending student payload:", newStudent);
-
       // Using your existing API endpoint
       const res = await axios.post(
         "http://localhost:8080/api/students",
@@ -206,14 +204,9 @@ const StudentManagement = () => {
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
         
-        console.log("Raw Excel data:", jsonData);
-        
         // Skip header row and convert to objects
         const headers = jsonData[0];
         const dataRows = jsonData.slice(1);
-        
-        console.log("Headers:", headers);
-        console.log("Data rows:", dataRows);
         
         // Map headers to expected field names
         const headerMap = {
@@ -246,13 +239,10 @@ const StudentManagement = () => {
             // Add department from admin data
             student.department = adminData.div;
             
-            console.log(`Row ${index + 2}:`, student);
             return student;
           })
           .filter(student => student.name && student.enrollmentNumber && student.rollNumber && student.year && student.batch);
 
-        console.log("Processed students:", studentsToUpload);
-        
         if (studentsToUpload.length === 0) {
           throw new Error("No valid student data found in the Excel file. Please check the column headers and data.");
         }
@@ -270,13 +260,10 @@ const StudentManagement = () => {
           }
         );
 
-        console.log("Upload response:", res.data);
-
         await Promise.all([fetchStudents(), fetchBatches()]);
 
         if (res.data.errors && res.data.errors.length > 0) {
           setError(`${res.data.message}. ${res.data.errors.length} rows failed. Check console for details.`);
-          console.log("Upload errors:", res.data.errors);
         } else {
           setError(`${res.data.message} - ${studentsToUpload.length} students uploaded successfully!`);
         }
@@ -373,7 +360,6 @@ const StudentManagement = () => {
         return rollA - rollB;
       });
     
-    console.log(`Selected batch: ${selectedBatch}, Search term: "${searchTerm}", Found students: ${filteredStudents.length}`);
     return filteredStudents;
   };
 

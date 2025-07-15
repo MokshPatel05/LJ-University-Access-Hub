@@ -23,9 +23,9 @@ router.get("/", async (req, res) => {
   const { department, year } = req.query;
   try {
     const schedule = await Schedule.find({ department, year })
-      .populate("subject")
-      .populate("teacher")
-      .populate("admin");
+      .populate("subject", "name")
+      .populate("teacher", "name")
+      .populate("admin", "name");
     res.status(200).json(schedule);
   } catch (err) {
     console.error("Error fetching schedule:", err);

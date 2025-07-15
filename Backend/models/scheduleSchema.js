@@ -29,5 +29,7 @@ const scheduleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+scheduleSchema.index({ department: 1, year: 1 });
+
 const Schedule = mongoose.model("Schedule", scheduleSchema);
 module.exports = Schedule;

@@ -58,7 +58,8 @@ router.get("/batches/:adminId", async (req, res) => {
       return res.status(404).json({ message: "Admin not found" });
     }
 
-    const batches = await Batch.find({ year }).select("name department year");
+    // Filter by both year and department (div)
+    const batches = await Batch.find({ year, department: admin.div }).select("name department year");
     res.status(200).json(batches);
   } catch (err) {
     console.error("Error fetching batches:", err);

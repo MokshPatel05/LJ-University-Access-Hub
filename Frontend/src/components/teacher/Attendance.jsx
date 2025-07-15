@@ -44,7 +44,6 @@ const Attendance = ({ onBackToDashboard }) => {
   };
 
   const handleSaveAttendance = () => {
-    console.log("Saving attendance:", students);
     alert("Attendance saved successfully!");
   };
 

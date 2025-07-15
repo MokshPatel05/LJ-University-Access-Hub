@@ -43,7 +43,6 @@ function BatchManagement() {
         );
         if (!batchesResponse.ok) throw new Error("Failed to fetch batches");
         const batchesData = await batchesResponse.json();
-        console.log("Fetched batches:", batchesData); // Debug log
         setBatches(batchesData);
       } catch (err) {
         console.error("Error fetching data:", err);
@@ -100,7 +99,6 @@ function BatchManagement() {
         if (!res.ok) throw new Error("Failed to update batch");
       } else {
         // Create mode
-        console.log("Sending payload:", payload);
         res = await fetch("http://localhost:8080/api/batches", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -243,7 +241,6 @@ function BatchManagement() {
               return aNum - bNum;
             })
             .map((batch) => {
-              console.log("Displaying batch:", batch.name); // Debug log for displayed batches
               return (
                 <div
                   key={batch._id}

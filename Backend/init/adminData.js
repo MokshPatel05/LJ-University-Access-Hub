@@ -23,30 +23,23 @@ async function main() {
 const adminData = [
   {
     name: "John Smith",
-    password: "Admin123!", // Will be hashed
-    year: 1,
-    div: "SY1",
-    teachers: [],
-  },
-  {
-    name: "Emma Johnson",
-    password: "SecurePass456!", // Will be hashed
-    year: 1,
-    div: "SY2",
-    teachers: [],
-  },
-  {
-    name: "Michael Brown",
-    password: "Admin789!", // Will be hashed
-    year: 2,
-    div: "SY3",
-    teachers: [],
-  },
-  {
-    name: "Mitesh Thakkar",
     password: "IamAdmin", // Will be hashed
     year: 2,
     div: "SY2",
+    teachers: [],
+  },
+  {
+    name: "Prof. Mitesh Thakkar",
+    password: "Admin123!", // Will be hashed
+    year: 2,
+    div: "SY2",
+    teachers: [],
+  },
+  {
+    name: "Test",
+    password: "Test", // Will be hashed
+    year: 1,
+    div: "FY2",
     teachers: [],
   },
 ];
