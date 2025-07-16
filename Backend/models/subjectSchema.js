@@ -18,6 +18,10 @@ const subjectSchema = new Schema({
       ref: "Teacher",
     },
   ],
+  totalLectures: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const Subject = mongoose.model("Subject", subjectSchema);

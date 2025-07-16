@@ -7,7 +7,11 @@ const scheduleSchema = new mongoose.Schema(
     day: { type: String, required: true },
     department: { type: String, required: true },
     year: { type: Number, required: true },
-    batch: { type: String, required: true },
+    batch: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Batch",
+      required: true
+    },
     admin: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",

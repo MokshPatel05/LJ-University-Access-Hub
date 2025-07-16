@@ -15,6 +15,7 @@ const subjectRoutes = require("./routes/subject");
 const scheduleRoutes = require("./routes/schedule");
 const apiRoutes = require("./routes/api");
 const studentRoutes = require("./routes/students");
+const attendanceRoutes = require("./routes/attendance");
 
 const path = require("path");
 const methodOverride = require("method-override");
@@ -42,6 +43,7 @@ app.use("/api/schedule", require("./routes/schedule"));
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api", apiRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/attendance", attendanceRoutes);
 
 // MongoDB connection
 const dburl = process.env.MONGO_URL;
