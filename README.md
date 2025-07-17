@@ -71,7 +71,7 @@ FSD-Group/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/FSD-Group.git
+git clone [https://github.com/yourusername/FSD-Group.git](https://github.com/MokshPatel05/LJ-University-Access-Hub.git)
 cd FSD-Group
 ```
 
