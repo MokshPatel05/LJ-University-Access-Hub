@@ -5,8 +5,8 @@ require("dotenv").config();
 const Admin = require("../models/adminSchema");
 
 // Connect to MongoDB
-const dburl =
-  "mongodb+srv://Moksh:Host-2005@ljaccesshub.blceukc.mongodb.net/LJAccessHub?retryWrites=true&w=majority&appName=LJAccessHub";
+require('dotenv').config();
+const dburl = process.env.MONGO_URL;
 main()
   .then(() => {
     console.log("Connected to Database");

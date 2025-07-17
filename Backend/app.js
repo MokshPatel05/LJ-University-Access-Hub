@@ -55,6 +55,7 @@ main()
     console.error("Database connection failed:", e);
     process.exit(1);
   });
+
 async function main() {
   await mongoose.connect(dburl);
 }
