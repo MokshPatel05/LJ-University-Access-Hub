@@ -16,11 +16,8 @@ const Batch = require("../models/batchSchema");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-console.log("attendance.js loaded");
-
 // Add catch-all middleware to log every request to this router
 router.use((req, res, next) => {
-  console.log("Attendance route hit:", req.method, req.originalUrl);
   next();
 });
 
@@ -92,9 +89,8 @@ router.post("/bulk", upload.single("file"), async (req, res) => {
 
         // Use IST for the attendance date
         const attendanceDate = date
-          ? moment.tz(date, "Asia/Kolkata").toDate()
-          : moment().tz("Asia/Kolkata").toDate();
-        attendanceDate.setHours(0, 0, 0, 0);
+          ? moment.tz(date, "Asia/Kolkata").startOf('day').toDate()
+          : moment().tz("Asia/Kolkata").startOf('day').toDate();
 
         const existingRecord = await Attendance.findOne({
           student: student._id,
@@ -208,6 +204,7 @@ router.get("/", async (req, res) => {
 });
 
 // GET /api/attendance/students - Fetch students for attendance
+// GET /api/attendance/students - Fetch students for attendance
 router.get("/students", async (req, res) => {
   try {
     const { teacherId, batchId, subjectId, classId, date } = req.query;
@@ -261,41 +258,31 @@ router.get("/students", async (req, res) => {
       attendanceDate = moment.tz("Asia/Kolkata").startOf('day').toDate();
     }
 
-    console.log("Fetching attendance for date:", attendanceDate);
-    console.log("Fetching attendance for classId:", classId);
-    console.log("Fetching attendance for class time:", schedule.time);
-
-    // FIXED: Fetch existing attendance for the specific class, date, subject, and time
+    // Fetch existing attendance for the specific class, date, and subject
     const attendanceRecords = await Attendance.find({
       student: { $in: students.map((s) => s._id) },
       "attendanceEntries.date": attendanceDate,
       "attendanceEntries.subject": effectiveSubjectId,
       "attendanceEntries.classId": classId,
-      "attendanceEntries.time": schedule.time
-    }).lean();
-
-    console.log("Found attendance records:", attendanceRecords.length);
+    })
+      .populate("student", "rollNumber name _id") // Make sure to populate the _id field
+      .lean();
 
     // Map attendance status to students for this specific class
     const studentsWithAttendance = students.map((student) => {
       const attendance = attendanceRecords.find(
-        (record) =>
-          record.student.toString() === student._id.toString() &&
-          record.attendanceEntries.some(
-            (entry) =>
-              entry.date.getTime() === attendanceDate.getTime() &&
-              entry.subject.toString() === effectiveSubjectId.toString() &&
-              entry.classId?.toString() === classId.toString() &&
-              entry.time === schedule.time
-          )
+        (record) => {
+          // FIX: Properly compare student IDs
+          const recordStudentId = record.student._id || record.student;
+          return recordStudentId.toString() === student._id.toString();
+        }
       );
 
       const entry = attendance?.attendanceEntries.find(
         (e) =>
           e.date.getTime() === attendanceDate.getTime() &&
           e.subject.toString() === effectiveSubjectId.toString() &&
-          e.classId?.toString() === classId.toString() &&
-          e.time === schedule.time
+          e.classId?.toString() === classId.toString()
       );
 
       return {
@@ -310,7 +297,6 @@ router.get("/students", async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 });
-
 
 // POST /api/attendance/save - Save attendance records
 router.post("/save", async (req, res) => {
@@ -336,23 +322,17 @@ router.post("/save", async (req, res) => {
       return res.status(400).json({ message: "Subject not found" });
     }
 
-    // FIX: Properly handle IST date conversion
+    // Use IST date conversion
     let attendanceDate;
     if (date) {
-      // If date is provided, ensure it's treated as IST
       if (typeof date === 'string') {
-        // If it's a string like "2025-07-16", treat it as IST
         attendanceDate = moment.tz(date, "Asia/Kolkata").startOf('day').toDate();
       } else {
-        // If it's already a Date object, convert from UTC to IST
         attendanceDate = moment.tz(date, "Asia/Kolkata").startOf('day').toDate();
       }
     } else {
-      // Use current IST date
       attendanceDate = moment.tz("Asia/Kolkata").startOf('day').toDate();
     }
-
-    console.log("Attendance date being saved:", attendanceDate);
 
     const addedRecords = [];
     const errors = [];
@@ -366,15 +346,7 @@ router.post("/save", async (req, res) => {
           continue;
         }
 
-        // Fetch the schedule to get the time
-        const schedule = await Schedule.findById(classId);
-        if (!schedule) {
-          errors.push({ studentId, error: "Schedule not found" });
-          continue;
-        }
-        const classTime = schedule.time;
-
-        // Check for existing record for this student, subject, date, classId, and time
+        // Check for existing record for this student, subject, date, and classId
         const existingRecord = await Attendance.findOne({
           student: studentId,
           attendanceEntries: {
@@ -382,20 +354,18 @@ router.post("/save", async (req, res) => {
               subject: subjectId,
               date: attendanceDate,
               classId: classId,
-              time: classTime,
             },
           },
         });
 
         if (existingRecord) {
-          // Update the existing entry for this specific classId and time
+          // Update the existing entry
           await Attendance.updateOne(
             {
               student: studentId,
               "attendanceEntries.subject": subjectId,
               "attendanceEntries.date": attendanceDate,
               "attendanceEntries.classId": classId,
-              "attendanceEntries.time": classTime
             },
             { $set: { "attendanceEntries.$.isPresent": isPresent } }
           );
@@ -403,10 +373,9 @@ router.post("/save", async (req, res) => {
             studentId,
             subject: subjectId,
             classId,
-            time: classTime,
             date: attendanceDate,
             isPresent,
-            updated: true
+            updated: true,
           });
           continue;
         }
@@ -415,7 +384,6 @@ router.post("/save", async (req, res) => {
         const newEntry = {
           subject: subjectId,
           classId,
-          time: classTime,
           date: attendanceDate,
           isPresent,
         };
@@ -434,8 +402,8 @@ router.post("/save", async (req, res) => {
       }
     }
 
-    // Update totalLectures for the subject only if new records were added (not updated)
-    const newRecords = addedRecords.filter(record => !record.updated);
+    // Update totalLectures for the subject only if new records were added
+    const newRecords = addedRecords.filter((record) => !record.updated);
     if (newRecords.length > 0) {
       await Subject.findByIdAndUpdate(subjectId, {
         $inc: { totalLectures: 1 },
@@ -567,7 +535,7 @@ router.get("/daily-report", async (req, res) => {
       return res.status(400).json({ message: "Admin not found" });
     }
 
-    // FIX: Use provided date or current IST date
+    // Use provided date or current IST date
     let targetDate;
     if (date) {
       targetDate = moment.tz(date, "Asia/Kolkata");
@@ -578,34 +546,29 @@ router.get("/daily-report", async (req, res) => {
     const currentDate = targetDate.startOf("day").toDate();
     const endOfDay = targetDate.endOf("day").toDate();
 
-    console.log("Daily report for date range:", currentDate, "to", endOfDay);
-
     // Get the day of the week for the target date
-    const dayOfWeek = targetDate.format('dddd'); // e.g., "Monday", "Tuesday"
-    
+    const dayOfWeek = targetDate.format('dddd');
+
     // Fetch all schedules for the current day of the week
     const schedules = await Schedule.find({
       day: dayOfWeek,
       admin: adminId,
     })
-      .populate("subject", "name code")
-      .populate("teacher", "name")
+      .populate("subject", "name")
+      .populate("teacher", "ID_Name")
       .populate("batch", "name")
       .lean();
 
-    console.log(`Found ${schedules.length} schedules for ${dayOfWeek} under admin ${adminId}`);
-
-    // Fetch all attendance records for the current date
+    // Fetch all attendance records for the current date and specific classId
     const attendanceRecords = await Attendance.find({
       "attendanceEntries.date": {
         $gte: currentDate,
         $lte: endOfDay,
       },
+      "attendanceEntries.classId": { $in: schedules.map(s => s._id) },
     })
       .populate("student", "rollNumber")
       .lean();
-
-    console.log(`Found ${attendanceRecords.length} attendance records for the date range`);
 
     // Process each schedule to determine submission status and attendance metrics
     const submissions = await Promise.all(
@@ -617,22 +580,22 @@ router.get("/daily-report", async (req, res) => {
             .lean();
           const totalStudents = students.length;
 
-          // Find attendance records for this schedule
+          // Find attendance records for this specific schedule
           const scheduleAttendance = attendanceRecords
             .filter((record) =>
               record.attendanceEntries.some(
                 (entry) =>
-                  entry.classId && entry.classId.toString() === schedule._id.toString() &&
-                  entry.date >= currentDate &&
-                  entry.date <= endOfDay
+                  entry.classId &&
+                  entry.classId.toString() === schedule._id.toString() &&
+                  entry.date.getTime() === currentDate.getTime()
               )
             )
             .flatMap((record) =>
               record.attendanceEntries.filter(
                 (entry) =>
-                  entry.classId && entry.classId.toString() === schedule._id.toString() &&
-                  entry.date >= currentDate &&
-                  entry.date <= endOfDay
+                  entry.classId &&
+                  entry.classId.toString() === schedule._id.toString() &&
+                  entry.date.getTime() === currentDate.getTime()
               )
             );
 
@@ -642,31 +605,29 @@ router.get("/daily-report", async (req, res) => {
             : 0;
           const attendanceRate =
             totalStudents > 0 ? (presentStudents / totalStudents) * 100 : 0;
-          const absentStudents = submitted
-            ? scheduleAttendance
-              .filter((entry) => !entry.isPresent)
-              .map(
-                () =>
-                  students.find((s) =>
-                    attendanceRecords.some((ar) =>
-                      ar.attendanceEntries.some(
-                        (e) =>
-                          e.student && e.student.toString() === s._id.toString() &&
-                          e.classId && e.classId.toString() === schedule._id.toString() &&
-                          !e.isPresent
-                      )
-                    )
-                  )?.rollNumber
-              )
-              .filter(Boolean)
-            : [];
+
+          // Map absent students to rollNumber (fixed logic)
+          const absentStudents = [];
+          attendanceRecords.forEach((record) => {
+            record.attendanceEntries.forEach((entry) => {
+              if (
+                entry.classId &&
+                entry.classId.toString() === schedule._id.toString() &&
+                entry.date.getTime() === currentDate.getTime() &&
+                !entry.isPresent
+              ) {
+                absentStudents.push(record.student.rollNumber);
+              }
+            });
+          });
 
           return {
             id: schedule._id.toString(),
-            teacher: schedule.teacher.name,
+            teacher: schedule.teacher.ID_Name,
             subject: schedule.subject.name,
             batch: schedule.batch.name,
             date: moment.tz(currentDate, "Asia/Kolkata").format("YYYY-MM-DD"),
+            room: schedule.room || "-",
             submitted,
             submittedAt: submitted
               ? new Date(scheduleAttendance[0].createdAt).toLocaleTimeString([], {
@@ -686,13 +647,11 @@ router.get("/daily-report", async (req, res) => {
       })
     );
 
-    // Filter out any null submissions (from errors)
-    const validSubmissions = submissions.filter(submission => submission !== null);
+    // Filter out any null submissions
+    const validSubmissions = submissions.filter((submission) => submission !== null);
 
     // Calculate overview metrics
-    const totalTeachers = new Set(
-      validSubmissions.map((s) => s.teacher)
-    ).size;
+    const totalTeachers = new Set(validSubmissions.map((s) => s.teacher)).size;
     const submittedCount = validSubmissions.filter((s) => s.submitted).length;
     const pendingCount = validSubmissions.length - submittedCount;
     const allSubmitted = pendingCount === 0;

@@ -63,23 +63,26 @@ const AdminDash = () => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen">
       {/* Sidebar */}
       <div className="w-1/6 flex-shrink-0">
         <Sidebar />
       </div>
 
       {/* Main Content */}
-      <div className="w-5/6 flex-1 p-6 overflow-y-auto">
-        <div className="space-y-6 mt-16">
-          <div>
-            <h1 className="text-3 py-6 font-bold text-gray-900">
-              Dashboard Overview
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Welcome to the admin panel. Manage your college attendance system
-              efficiently.
-            </p>
+      <div className="w-5/6 flex-1 bg-gradient-to-br from-blue-50 to-white p-6 overflow-y-auto min-h-screen">
+        <div className="max-w-7xl mx-auto mt-16">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-blue-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  Dashboard Overview
+                </h1>
+                <p className="text-gray-600">
+                  Welcome to the admin panel. Manage your college attendance system efficiently.
+                </p>
+              </div>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

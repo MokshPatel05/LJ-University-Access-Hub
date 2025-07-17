@@ -61,8 +61,6 @@ const Attendance = ({ onBackToDashboard }) => {
         // FIX: Send date as string in YYYY-MM-DD format
         const istDateString = moment.tz("Asia/Kolkata").format("YYYY-MM-DD");
 
-        console.log("Fetching students for date:", istDateString);
-
         const res = await axios.get("/api/attendance/students", {
           params: {
             teacherId,
@@ -124,8 +122,6 @@ const Attendance = ({ onBackToDashboard }) => {
       // FIX: Send date as string in YYYY-MM-DD format
       const istDateString = moment.tz("Asia/Kolkata").format("YYYY-MM-DD");
 
-      console.log("Saving attendance for date:", istDateString);
-
       const payload = {
         classId: selectedClass,
         subjectId: classObj.subject._id || classObj.subject,
@@ -136,10 +132,7 @@ const Attendance = ({ onBackToDashboard }) => {
         })),
       };
 
-      console.log("Payload being sent:", payload);
-
       const response = await axios.post("/api/attendance/save", payload);
-      console.log("Save response:", response.data);
 
       alert("Attendance saved successfully!");
     } catch (err) {

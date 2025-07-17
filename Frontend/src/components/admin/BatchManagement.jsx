@@ -184,110 +184,125 @@ function BatchManagement() {
   }
 
   return (
-    <div className="flex min-h-screen mt-16 bg-gradient-to-br from-blue-50 to-white">
+    <div className="flex min-h-screen mt-16">
       <div className="w-64 flex-shrink-0 bg-white border-r border-blue-200">
         <Sidebar />
       </div>
 
-      <div className="flex-1 p-6">
-        <div className="relative w-full md:w-1/3 mb-6">
-          <input
-            type="text"
-            placeholder="Search by batch name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 pr-10 py-2 border border-blue-200 rounded-md shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
-          />
-          <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-blue-400">
-            <i className="fas fa-search"></i>
-          </span>
-        </div>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-bold mb-2 text-blue-900">
-              Batch Management
-            </h2>
-            <p className="text-blue-600">
-              Create and manage student batches and classes
-            </p>
+      <div className="flex-1 bg-gradient-to-br from-blue-50 to-white p-6 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-blue-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  Batch Management
+                </h1>
+                <p className="text-gray-600">
+                  Create and manage student batches and classes
+                </p>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={() => {
-              setFormData({
-                batchName: "",
-                department: adminData.div,
-                academicYear: "",
-              });
-              setEditingBatchId(null);
-              setIsModalOpen(true);
-            }}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors text-white shadow-sm"
-            disabled={!adminData.div}>
-            <Plus className="w-4 h-4" />
-            <span>Create Batch</span>
-          </button>
-        </div>
 
-        {/* Batch Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {batches
-            .filter((batch) =>
-              batch.name?.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-            .sort((a, b) => {
-              const aNum = parseInt(a.name.replace(/[^\d]/g, ""), 10);
-              const bNum = parseInt(b.name.replace(/[^\d]/g, ""), 10);
-              return aNum - bNum;
-            })
-            .map((batch) => {
-              return (
-                <div
-                  key={batch._id}
-                  className="bg-white rounded-lg p-6 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-blue-900">
-                      {batch.name}
-                    </h3>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditBatch(batch)}
-                        className="p-1 text-blue-400 hover:text-blue-600 transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBatch(batch._id)}
-                        className="p-1 text-red-400 hover:text-red-500 transition-colors">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+          <div className="relative w-full md:w-1/3 mb-6">
+            <input
+              type="text"
+              placeholder="Search by batch name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 pr-10 py-2 border border-blue-200 rounded-md shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500"
+            />
+            <span className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-blue-400">
+              <i className="fas fa-search"></i>
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-2 text-blue-900">
+                Batch Management
+              </h2>
+              <p className="text-blue-600">
+                Create and manage student batches and classes
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setFormData({
+                  batchName: "",
+                  department: adminData.div,
+                  academicYear: "",
+                });
+                setEditingBatchId(null);
+                setIsModalOpen(true);
+              }}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors text-white shadow-sm"
+              disabled={!adminData.div}>
+              <Plus className="w-4 h-4" />
+              <span>Create Batch</span>
+            </button>
+          </div>
+
+          {/* Batch Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {batches
+              .filter((batch) =>
+                batch.name?.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+              .sort((a, b) => {
+                const aNum = parseInt(a.name.replace(/[^\d]/g, ""), 10);
+                const bNum = parseInt(b.name.replace(/[^\d]/g, ""), 10);
+                return aNum - bNum;
+              })
+              .map((batch) => {
+                return (
+                  <div
+                    key={batch._id}
+                    className="bg-white rounded-lg p-6 border border-blue-200 hover:border-blue-300 hover:shadow-md transition-all duration-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-blue-900">
+                        {batch.name}
+                      </h3>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEditBatch(batch)}
+                          className="p-1 text-blue-400 hover:text-blue-600 transition-colors">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBatch(batch._id)}
+                          className="p-1 text-red-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 mb-4">
+                      <p className="text-sm text-blue-600">
+                        <span className="font-medium text-blue-900">
+                          Department:
+                        </span>{" "}
+                        {batch.department}
+                      </p>
+                      <p className="text-sm text-blue-600">
+                        <span className="font-medium text-blue-900">Year:</span>{" "}
+                        {batch.year}
+                      </p>
+                      <div className="flex items-center text-sm text-blue-600">
+                        <Users className="w-4 h-4 mr-1 text-blue-500" />
+                        <span className="font-medium text-blue-900">
+                          Students:
+                        </span>
+                        <span className="ml-1">{batch.students.length}</span>
+                      </div>
+                      <p className="text-xs text-blue-500 italic mt-2">
+                        Batch Under: {batch.createdBy?.name}
+                      </p>
                     </div>
                   </div>
-
-                  <div className="space-y-2 mb-4">
-                    <p className="text-sm text-blue-600">
-                      <span className="font-medium text-blue-900">
-                        Department:
-                      </span>{" "}
-                      {batch.department}
-                    </p>
-                    <p className="text-sm text-blue-600">
-                      <span className="font-medium text-blue-900">Year:</span>{" "}
-                      {batch.year}
-                    </p>
-                    <div className="flex items-center text-sm text-blue-600">
-                      <Users className="w-4 h-4 mr-1 text-blue-500" />
-                      <span className="font-medium text-blue-900">
-                        Students:
-                      </span>
-                      <span className="ml-1">{batch.students.length}</span>
-                    </div>
-                    <p className="text-xs text-blue-500 italic mt-2">
-                      Batch Under: {batch.createdBy?.name}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+          </div>
         </div>
       </div>
 

@@ -292,7 +292,7 @@ function parseStartTime(timeRange) {
 // GET /api/teacher/:id/weekly-schedule
 router.get("/:id/weekly-schedule", async (req, res) => {
   const teacherId = req.params.id;
-  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   try {
     const weeklySchedule = {};

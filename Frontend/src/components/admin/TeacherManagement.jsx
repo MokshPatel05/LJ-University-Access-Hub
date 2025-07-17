@@ -192,138 +192,119 @@ const TeacherManager = () => {
       t.ID_Name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Group teachers by subject for display
+  const teachersBySubject = subjects.map((subject) => {
+    const teachersForSubject = filteredTeachers.filter((teacher) =>
+      (teacher.subjects || []).some((s) => (typeof s === "object" ? s._id === subject._id : s === subject._id))
+    );
+    return { subject, teachers: teachersForSubject };
+  });
+
   return (
     <div className="flex min-h-screen">
       <div className="w-64 flex-shrink-0 bg-gray-50">
         <Sidebar />
       </div>
 
-      <div className="flex-1 p-6 mt-16">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Teacher Management
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Add, edit, and manage teacher accounts
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              setIsAddTeacherOpen(true);
-              setEditingId(null);
-              setFormData({
-                name: "",
-                ID_Name: "",
-                password: "",
-                batch: [],
-                subjects: [],
-              });
-            }}
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
-            <Plus className="w-4 h-4" />
-            <span>Add Teacher</span>
-          </button>
-        </div>
-
-        {/* Search */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="text"
-              placeholder="Search teachers by ID Name or Name..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">
-              All Teachers
-            </h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    ID Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Batches
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Subjects
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Admins
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTeachers.map((teacher) => (
-                  <tr key={teacher._id}>
-                    <td className="px-6 py-4">{teacher.name}</td>
-                    <td className="px-6 py-4">{teacher.ID_Name}</td>
-                    <td className="px-6 py-4">
-                      {(teacher.batch || [])
-                        .map((batch) => getBatchName(batch))
-                        .join(", ")}
-                    </td>
-                    <td className="px-6 py-4">
-                      {(teacher.subjects || [])
-                        .map((s) => {
-                          if (typeof s === "object" && s?.name) return s.name;
-                          const match = subjects.find((subj) => subj._id === s);
-                          return match ? match.name : "Unknown";
-                        })
-                        .join(", ")}
-                    </td>
-                    <td className="px-6 py-4">
-                      {/* ✅ Display multiple admins */}
-                      {Array.isArray(teacher.admin)
-                        ? teacher.admin.map((admin) => admin.name).join(", ")
-                        : teacher.admin?.name || "-"}
-                    </td>
-                    <td className="px-6 py-4 space-x-2">
-                      {/* ✅ Check if current admin can edit/delete */}
-                      {canEditTeacher(teacher) && (
-                        <>
-                          <button
-                            onClick={() => handleEdit(teacher)}
-                            className="text-blue-500 hover:underline">
-                            <Edit className="inline-block w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() =>
-                              handleDelete(teacher._id, teacher.name)
-                            }
-                            className="text-red-500 hover:underline">
-                            <Trash2 className="inline-block w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredTeachers.length === 0 && (
-              <div className="text-center py-6 text-gray-500">
-                No teachers found.
+      <div className="flex-1 bg-gradient-to-br from-blue-50 to-white p-6 mt-16 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-blue-600">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                  Teacher Management
+                </h1>
+                <p className="text-gray-600">
+                  Add, edit, and manage teacher accounts
+                </p>
               </div>
-            )}
+              <button
+                onClick={() => {
+                  setIsAddTeacherOpen(true);
+                  setEditingId(null);
+                  setFormData({
+                    name: "",
+                    ID_Name: "",
+                    password: "",
+                    batch: [],
+                    subjects: [],
+                  });
+                }}
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors">
+                <Plus className="w-4 h-4" />
+                <span>Add Teacher</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 mt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search teachers by ID Name or Name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Table - Grouped by Subject */}
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
+            <div className="overflow-x-auto">
+              {teachersBySubject.filter(({ teachers }) => teachers.length > 0).map(({ subject, teachers }) => (
+                <div key={subject._id} className="mb-8">
+                  <div className="bg-green-50 rounded-lg px-6 pt-6 pb-2 mb-2 flex items-center shadow-sm border border-green-100">
+                    <h3 className="text-lg font-bold text-green-700">{subject.name}</h3>
+                  </div>
+                  <table className="w-full mb-2">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batches</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subjects</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Admins</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {teachers.map((teacher) => (
+                        <tr key={teacher._id}>
+                          <td className="px-6 py-4">{teacher.name}</td>
+                          <td className="px-6 py-4">{teacher.ID_Name}</td>
+                          <td className="px-6 py-4">{(teacher.batch || []).map((batch) => getBatchName(batch)).join(", ")}</td>
+                          <td className="px-6 py-4">{(teacher.subjects || []).map((s) => {
+                            if (typeof s === "object" && s?.name) return s.name;
+                            const match = subjects.find((subj) => subj._id === s);
+                            return match ? match.name : "Unknown";
+                          }).join(", ")}</td>
+                          <td className="px-6 py-4">{Array.isArray(teacher.admin) ? teacher.admin.map((admin) => admin.name).join(", ") : teacher.admin?.name || "-"}</td>
+                          <td className="px-6 py-4 space-x-2">
+                            {canEditTeacher(teacher) && (
+                              <>
+                                <button onClick={() => handleEdit(teacher)} className="text-blue-500 hover:underline">
+                                  <Edit className="inline-block w-4 h-4" />
+                                </button>
+                                <button onClick={() => handleDelete(teacher._id, teacher.name)} className="text-red-500 hover:underline">
+                                  <Trash2 className="inline-block w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+              {/* If no teachers at all */}
+              {filteredTeachers.length === 0 && (
+                <div className="text-center py-6 text-gray-500">No teachers found.</div>
+              )}
+            </div>
           </div>
         </div>
 
