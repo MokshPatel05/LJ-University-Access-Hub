@@ -1,4 +1,4 @@
-# FSD-Group College Attendance Management System
+# LJ University Access Hub
 
 A full-stack web application for managing college attendance, built with **React (Vite, Tailwind CSS)** for the frontend and **Node.js (Express, MongoDB, Mongoose)** for the backend.
 
