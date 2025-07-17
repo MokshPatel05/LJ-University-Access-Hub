@@ -26,18 +26,14 @@ const Schedule = () => {
   }, [id]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex w-full">
       <Sidebar />
       <div className="flex-1 ml-64">
         <main className="p-6">
-          <div className="space-y-6 mt-16">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Weekly Schedule
-                </h1>
-                <p className="text-gray-600 mt-2">View your class schedule</p>
-              </div>
+          <div className="space-y-6 mt-16 max-w-7xl mx-auto">
+            <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-green-600">
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Weekly Schedule</h1>
+              <p className="text-gray-600">View your class schedule</p>
             </div>
 
             {loading ? (

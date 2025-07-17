@@ -147,17 +147,12 @@ const Attendance = ({ onBackToDashboard }) => {
       <div className="w-64 flex-shrink-0 bg-gray-50">
         <Sidebar />
       </div>
-      <div className="flex-1 p-6 mt-16">
-        <div className="flex items-center space-x-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Mark Attendance
-            </h1>
-            <p className="text-gray-600 mt-2">
-              Select a class and mark attendance for students
-            </p>
+      <div className="flex-1 bg-gradient-to-br from-blue-50 to-white p-6 mt-16 min-h-screen">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-green-600">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Mark Attendance</h1>
+            <p className="text-gray-600">Select a class and mark attendance for students</p>
           </div>
-        </div>
         {error && (
           <div className="bg-red-100 text-red-700 p-4 rounded-md mb-6">
             {error}
@@ -427,6 +422,7 @@ const Attendance = ({ onBackToDashboard }) => {
             </div>
           </>
         )}
+        </div>
       </div>
     </div >
   );

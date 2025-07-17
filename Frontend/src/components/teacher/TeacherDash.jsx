@@ -29,14 +29,14 @@ const TeacherDash = () => {
   }, [id]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex w-full flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex w-full flex-col">
       <Sidebar />
       <div className="flex-1 ml-64 p-6">
-        <div className="mt-16 space-y-6">
+        <div className="mt-16 space-y-6 max-w-7xl mx-auto">
           {/* Welcome */}
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600 mt-2">Welcome back, {teacherName}</p>
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-6 border-l-4 border-green-600">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+            <p className="text-gray-600">Welcome back, {teacherName}</p>
           </div>
 
           {/* Stat Cards */}

@@ -10,6 +10,7 @@ import {
 import Sidebar from "./Sidebar"; // Adjust path based on your project structure
 import useUserId from "../../hooks/useUserId";
 import { useState, useEffect } from "react";
+import axios from "../../axios";
 
 const AdminDash = () => {
   const userId = useUserId(); // get the user's id
@@ -18,6 +19,7 @@ const AdminDash = () => {
     activeBatches: 0,
     todaysClasses: 0,
   });
+  const [attendanceSubmittedCount, setAttendanceSubmittedCount] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -33,6 +35,22 @@ const AdminDash = () => {
     };
 
     if (userId) fetchStats();
+  }, [userId]);
+
+  useEffect(() => {
+    // Fetch today's attendance report for submitted count
+    const fetchAttendanceReport = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const res = await axios.get("/api/attendance/daily-report", {
+          params: { adminId: userId, date: today },
+        });
+        setAttendanceSubmittedCount(res.data.submittedCount || 0);
+      } catch (err) {
+        setAttendanceSubmittedCount(0);
+      }
+    };
+    if (userId) fetchAttendanceReport();
   }, [userId]);
 
   const stats = [
@@ -56,7 +74,7 @@ const AdminDash = () => {
     },
     {
       title: "Attendance Report",
-      value: 10,
+      value: attendanceSubmittedCount,
       icon: Users,
       color: "text-red-500",
     },
@@ -112,7 +130,7 @@ const AdminDash = () => {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
             {/* Quick Actions Card 1 */}
             <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
               <div className="flex flex-col space-y-1.5 p-6 border-b border-gray-200">
