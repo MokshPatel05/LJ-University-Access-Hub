@@ -11,6 +11,8 @@ import {
 import Sidebar from "./Sidebar"; // Adjust path based on your project structure
 import axios from "../../axios"; // Adjust path to your axios instance
 import { useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 const AttendanceDownload = () => {
   const { id: adminId } = useParams(); // Assuming adminId is passed via route
@@ -21,8 +23,8 @@ const AttendanceDownload = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Set current date (July 15, 2025)
-  const currentDate = "2025-07-15";
+  // Set current date
+  const currentDate = new Date().toISOString().split('T')[0];
 
   const currentDayData = attendanceData[0] || {
     date: currentDate,
@@ -44,7 +46,7 @@ const AttendanceDownload = () => {
       setError("");
       try {
         const res = await axios.get("/api/attendance/daily-report", {
-          params: { adminId },
+          params: { adminId, date: currentDate },
         });
         setAttendanceData([res.data]); // Wrap in array to match original structure
       } catch (err) {
@@ -83,7 +85,57 @@ const AttendanceDownload = () => {
       return;
     }
 
-    // Placeholder: To be implemented later
+    // Generate PDF
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Attendance Sheet", 14, 16);
+    doc.setFontSize(12);
+    doc.text(
+      `Date: ${new Date(dayData.date).toLocaleDateString()}`,
+      14,
+      24
+    );
+
+    // Prepare table data
+    const tableData = [];
+    Object.entries(groupByTeacher(dayData.submissions)).forEach(
+      ([teacher, lectures]) => {
+        lectures.forEach((submission, idx) => {
+          tableData.push([
+            idx === 0 ? teacher : "", // Only show teacher name for first row of their lectures
+            submission.subject,
+            submission.batch,
+            submission.submitted ? "Submitted" : "Pending",
+            submission.presentStudents + "/" + submission.totalStudents,
+            submission.attendanceRate.toFixed(1) + "%",
+            submission.submittedAt || "-",
+          ]);
+        });
+      }
+    );
+
+    doc.autoTable({
+      head: [
+        [
+          "Teacher",
+          "Subject",
+          "Batch",
+          "Status",
+          "Present/Total",
+          "Attendance %",
+          "Submitted At",
+        ],
+      ],
+      body: tableData,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [22, 101, 216] },
+      styles: { fontSize: 10 },
+    });
+
+    doc.save(
+      `Attendance_Sheet_${new Date(dayData.date).toLocaleDateString()}.pdf`
+    );
     showToast(
       "Download Started",
       `Downloading attendance sheet for ${new Date(
@@ -109,6 +161,17 @@ const AttendanceDownload = () => {
     "all",
     ...new Set(currentDayData.submissions.map((s) => s.batch)),
   ];
+
+  // Group submissions by teacher
+  const groupByTeacher = (submissions) => {
+    return submissions.reduce((acc, submission) => {
+      if (!acc[submission.teacher]) acc[submission.teacher] = [];
+      acc[submission.teacher].push(submission);
+      return acc;
+    }, {});
+  };
+
+  const groupedSubmissions = groupByTeacher(filteredSubmissions);
 
   return (
     <div className="flex min-h-screen">
@@ -277,91 +340,99 @@ const AttendanceDownload = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 mt-6">
-            {filteredSubmissions.map((submission) => (
-              <div
-                key={submission.id}
-                className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">Subject</p>
-                        <p className="font-medium">{submission.subject}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Teacher</p>
-                        <p className="font-medium">{submission.teacher}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Batch</p>
-                        <p className="font-medium">{submission.batch}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Status</p>
-                        <div className="flex items-center space-x-1">
-                          {submission.submitted ? (
-                            <>
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span className="text-green-600 font-medium">
-                                Submitted
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-4 h-4 text-red-600" />
-                              <span className="text-red-600 font-medium">
-                                Pending
-                              </span>
-                            </>
-                          )}
+            {Object.keys(groupedSubmissions).length === 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
+                <div className="p-12 text-center">
+                  <p className="text-gray-500">
+                    No submissions found for the selected filters.
+                  </p>
+                </div>
+              </div>
+            )}
+            {Object.entries(groupedSubmissions).map(([teacher, lectures]) => (
+              <div key={teacher} className="mb-8">
+                <h3 className="text-xl font-bold text-blue-700 mb-2">{teacher}</h3>
+                <div className="space-y-4">
+                  {lectures.map((submission) => (
+                    <div
+                      key={submission.id}
+                      className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                    >
+                      <div className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-6 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-500">Subject</p>
+                              <p className="font-medium">{submission.subject}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Teacher</p>
+                              <p className="font-medium">{submission.teacher}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Batch</p>
+                              <p className="font-medium">{submission.batch}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Status</p>
+                              <div className="flex items-center space-x-1">
+                                {submission.submitted ? (
+                                  <>
+                                    <CheckCircle className="w-4 h-4 text-green-600" />
+                                    <span className="text-green-600 font-medium">
+                                      Submitted
+                                    </span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <XCircle className="w-4 h-4 text-red-600" />
+                                    <span className="text-red-600 font-medium">
+                                      Pending
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Submitted At</p>
+                              <p className="font-medium">
+                                {submission.submittedAt || "Not submitted"}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Attendance</p>
+                              <p className="font-medium text-green-600">
+                                {submission.presentStudents}/
+                                {submission.totalStudents} (
+                                {submission.attendanceRate.toFixed(1)}%)
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Submitted At</p>
-                        <p className="font-medium">
-                          {submission.submittedAt || "Not submitted"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">Attendance</p>
-                        <p className="font-medium text-green-600">
-                          {submission.presentStudents}/
-                          {submission.totalStudents} (
-                          {submission.attendanceRate.toFixed(1)}%)
-                        </p>
+                        {submission.submitted &&
+                          submission.absentStudents.length > 0 && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <p className="text-sm text-gray-500 mb-2">
+                                Absent Students:
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {submission.absentStudents.map((student, index) => (
+                                  <span
+                                    key={index}
+                                    className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full"
+                                  >
+                                    {student}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                       </div>
                     </div>
-                  </div>
-                  {submission.submitted &&
-                    submission.absentStudents.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
-                        <p className="text-sm text-gray-500 mb-2">
-                          Absent Students:
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {submission.absentStudents.map((student, index) => (
-                            <span
-                              key={index}
-                              className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                              {student}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  ))}
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {filteredSubmissions.length === 0 && !loading && (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm mt-6">
-            <div className="p-12 text-center">
-              <p className="text-gray-500">
-                No submissions found for the selected filters.
-              </p>
-            </div>
           </div>
         )}
       </div>

@@ -108,6 +108,12 @@ const Attendance = ({ onBackToDashboard }) => {
   };
 
   const handleSaveAttendance = async () => {
+    // Check if any student has not been marked
+    const unmarked = students.some(s => s.isPresent === null || s.isPresent === undefined);
+    if (unmarked) {
+      setError('Please fill the attendance for all students before saving.');
+      return;
+    }
     try {
       const classObj = todayClasses.find((c) => c._id === selectedClass);
       if (!classObj) {

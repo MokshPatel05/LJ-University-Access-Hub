@@ -580,18 +580,20 @@ router.get("/daily-report", async (req, res) => {
 
     console.log("Daily report for date range:", currentDate, "to", endOfDay);
 
-    // Fetch all schedules for the current date
+    // Get the day of the week for the target date
+    const dayOfWeek = targetDate.format('dddd'); // e.g., "Monday", "Tuesday"
+    
+    // Fetch all schedules for the current day of the week
     const schedules = await Schedule.find({
-      date: {
-        $gte: currentDate,
-        $lte: endOfDay,
-      },
-      createdBy: adminId,
+      day: dayOfWeek,
+      admin: adminId,
     })
       .populate("subject", "name code")
       .populate("teacher", "name")
       .populate("batch", "name")
       .lean();
+
+    console.log(`Found ${schedules.length} schedules for ${dayOfWeek} under admin ${adminId}`);
 
     // Fetch all attendance records for the current date
     const attendanceRecords = await Attendance.find({
@@ -603,86 +605,96 @@ router.get("/daily-report", async (req, res) => {
       .populate("student", "rollNumber")
       .lean();
 
+    console.log(`Found ${attendanceRecords.length} attendance records for the date range`);
+
     // Process each schedule to determine submission status and attendance metrics
     const submissions = await Promise.all(
       schedules.map(async (schedule) => {
-        // Fetch students in the batch
-        const students = await Student.find({ batchRef: schedule.batch._id })
-          .select("rollNumber")
-          .lean();
-        const totalStudents = students.length;
+        try {
+          // Fetch students in the batch
+          const students = await Student.find({ batchRef: schedule.batch._id })
+            .select("rollNumber")
+            .lean();
+          const totalStudents = students.length;
 
-        // Find attendance records for this schedule
-        const scheduleAttendance = attendanceRecords
-          .filter((record) =>
-            record.attendanceEntries.some(
-              (entry) =>
-                entry.classId?.toString() === schedule._id.toString() &&
-                entry.date >= currentDate &&
-                entry.date <= endOfDay
+          // Find attendance records for this schedule
+          const scheduleAttendance = attendanceRecords
+            .filter((record) =>
+              record.attendanceEntries.some(
+                (entry) =>
+                  entry.classId && entry.classId.toString() === schedule._id.toString() &&
+                  entry.date >= currentDate &&
+                  entry.date <= endOfDay
+              )
             )
-          )
-          .flatMap((record) =>
-            record.attendanceEntries.filter(
-              (entry) =>
-                entry.classId?.toString() === schedule._id.toString() &&
-                entry.date >= currentDate &&
-                entry.date <= endOfDay
-            )
-          );
+            .flatMap((record) =>
+              record.attendanceEntries.filter(
+                (entry) =>
+                  entry.classId && entry.classId.toString() === schedule._id.toString() &&
+                  entry.date >= currentDate &&
+                  entry.date <= endOfDay
+              )
+            );
 
-        const submitted = scheduleAttendance.length > 0;
-        const presentStudents = submitted
-          ? scheduleAttendance.filter((entry) => entry.isPresent).length
-          : 0;
-        const attendanceRate =
-          totalStudents > 0 ? (presentStudents / totalStudents) * 100 : 0;
-        const absentStudents = submitted
-          ? scheduleAttendance
-            .filter((entry) => !entry.isPresent)
-            .map(
-              () =>
-                students.find((s) =>
-                  attendanceRecords.some((ar) =>
-                    ar.attendanceEntries.some(
-                      (e) =>
-                        e.student.toString() === s._id.toString() &&
-                        e.classId?.toString() === schedule._id.toString() &&
-                        !e.isPresent
+          const submitted = scheduleAttendance.length > 0;
+          const presentStudents = submitted
+            ? scheduleAttendance.filter((entry) => entry.isPresent).length
+            : 0;
+          const attendanceRate =
+            totalStudents > 0 ? (presentStudents / totalStudents) * 100 : 0;
+          const absentStudents = submitted
+            ? scheduleAttendance
+              .filter((entry) => !entry.isPresent)
+              .map(
+                () =>
+                  students.find((s) =>
+                    attendanceRecords.some((ar) =>
+                      ar.attendanceEntries.some(
+                        (e) =>
+                          e.student && e.student.toString() === s._id.toString() &&
+                          e.classId && e.classId.toString() === schedule._id.toString() &&
+                          !e.isPresent
+                      )
                     )
-                  )
-                )?.rollNumber
-            )
-            .filter(Boolean)
-          : [];
+                  )?.rollNumber
+              )
+              .filter(Boolean)
+            : [];
 
-        return {
-          id: schedule._id.toString(),
-          teacher: schedule.teacher.name,
-          subject: schedule.subject.name,
-          batch: schedule.batch.name,
-          date: moment.tz(currentDate, "Asia/Kolkata").format("YYYY-MM-DD"),
-          submitted,
-          submittedAt: submitted
-            ? new Date(scheduleAttendance[0].createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })
-            : null,
-          totalStudents,
-          presentStudents,
-          attendanceRate,
-          absentStudents,
-        };
+          return {
+            id: schedule._id.toString(),
+            teacher: schedule.teacher.name,
+            subject: schedule.subject.name,
+            batch: schedule.batch.name,
+            date: moment.tz(currentDate, "Asia/Kolkata").format("YYYY-MM-DD"),
+            submitted,
+            submittedAt: submitted
+              ? new Date(scheduleAttendance[0].createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+              : null,
+            totalStudents,
+            presentStudents,
+            attendanceRate,
+            absentStudents,
+          };
+        } catch (scheduleError) {
+          console.error(`Error processing schedule ${schedule._id}:`, scheduleError);
+          return null;
+        }
       })
     );
 
+    // Filter out any null submissions (from errors)
+    const validSubmissions = submissions.filter(submission => submission !== null);
+
     // Calculate overview metrics
     const totalTeachers = new Set(
-      schedules.map((s) => s.teacher._id.toString())
+      validSubmissions.map((s) => s.teacher)
     ).size;
-    const submittedCount = submissions.filter((s) => s.submitted).length;
-    const pendingCount = submissions.length - submittedCount;
+    const submittedCount = validSubmissions.filter((s) => s.submitted).length;
+    const pendingCount = validSubmissions.length - submittedCount;
     const allSubmitted = pendingCount === 0;
 
     res.status(200).json({
@@ -691,7 +703,7 @@ router.get("/daily-report", async (req, res) => {
       submittedCount,
       pendingCount,
       allSubmitted,
-      submissions,
+      submissions: validSubmissions,
     });
   } catch (err) {
     console.error("Error fetching daily attendance report:", err);

@@ -15,7 +15,9 @@ async function clearData() {
     await Attendance.deleteMany({});
     console.log("All attendance deleted");
 
-
+    await Schedule.deleteMany({});
+    console.log("All schedules deleted");
+    
     await mongoose.disconnect();
     console.log("Disconnected from MongoDB");
     process.exit(0);
