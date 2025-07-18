@@ -79,7 +79,12 @@ const AttendanceDownload = () => {
       return;
     }
 
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [297, 210] });
+    // Change PDF format to A3 landscape for more width
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [420, 297] });
+    const pageWidth = doc.internal.pageSize.width;
+    const leftColX = 14;
+    const rightColX = pageWidth / 2 + 7;
+    const colWidth = (pageWidth - 28) / 2 - 7;
     const dateObj = new Date(dayData.date);
     const formattedDate = dateObj.toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -88,12 +93,27 @@ const AttendanceDownload = () => {
     });
     const dayName = dateObj.toLocaleDateString("en-GB", { weekday: "long" }).toUpperCase();
 
+    // Draw light pink background and lines for college details header, aligned with tables
+    const headerTopY = 8;
+    const headerBottomY = 42;
+    // Calculate the left and right bounds to match the full width of both columns
+    const headerLeftX = leftColX;
+    const headerRightX = rightColX + colWidth;
+    doc.setFillColor(255, 204, 204); // light pink
+    doc.rect(headerLeftX, headerTopY, headerRightX - headerLeftX, headerBottomY - headerTopY, 'F');
+    doc.setDrawColor(150, 150, 150);
+    doc.setLineWidth(0.5);
+    doc.line(headerLeftX, headerTopY, headerRightX, headerTopY); // top line
+    doc.line(headerLeftX, headerBottomY, headerRightX, headerBottomY); // bottom line
+
+    // Centering for A3 landscape (width 420mm, so center is 210)
+    const centerX = 210;
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("L J Institute of Engineering and Technology/L J K University", 148.5, 15, { align: "center" });
-    doc.text("Department:- SY CE/IT-2", 148.5, 22, { align: "center" });
-    doc.text("Batch:- B1 to B8 Daily Absent No.", 148.5, 29, { align: "center" });
-    doc.text(`Date:- ${formattedDate} (${dayName})`, 148.5, 36, { align: "center" });
+    doc.text("L J Institute of Engineering and Technology/L J K University", centerX, 18, { align: "center" });
+    doc.text("Department:- SY CE/IT-2", centerX, 25, { align: "center" });
+    doc.text("Batch:- B1 to B8 Daily Absent No.", centerX, 32, { align: "center" });
+    doc.text(`Date:- ${formattedDate} (${dayName})`, centerX, 39, { align: "center" });
 
     const groupByBatch = (submissions) => {
       return submissions.reduce((acc, submission) => {
@@ -106,11 +126,6 @@ const AttendanceDownload = () => {
     const batchWiseData = groupByBatch(dayData.submissions);
     const batches = Object.keys(batchWiseData).sort();
 
-    const pageWidth = doc.internal.pageSize.width;
-    const leftColX = 14;
-    const rightColX = pageWidth / 2 + 7;
-    const colWidth = (pageWidth - 28) / 2 - 7;
-
     let currentY = 50;
     let leftY = currentY;
     let rightY = currentY;
@@ -122,23 +137,30 @@ const AttendanceDownload = () => {
       if (leftBatch) {
         const leftLectures = batchWiseData[leftBatch];
         doc.setFontSize(10);
+        // Draw light blue background for batch name
+        doc.setFillColor(204, 229, 255); // light blue
+        doc.rect(leftColX, leftY, colWidth, 7, 'F');
         doc.setFont("helvetica", "bold");
-        doc.text(`Batch: ${leftBatch}`, leftColX, leftY);
-        leftY += 5;
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Batch: ${leftBatch}`, leftColX + colWidth / 2, leftY + 5, { align: "center" });
+        leftY += 7;
 
         const tableHeaders = ["Lec No.", "Subject", "Faculty", "Absent Nos."];
+        // Set thin black border for all table borders
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.3);
         doc.setFillColor(200, 200, 200);
         doc.rect(leftColX, leftY, colWidth, 6, 'F');
-        doc.setDrawColor(0, 0, 0);
         doc.rect(leftColX, leftY, colWidth, 6, 'S');
 
-        const colWidths = [colWidth * 0.15, colWidth * 0.25, colWidth * 0.20, colWidth * 0.40];
+        // Update column width calculations for more space for 'Absent Nos.'
+        const colWidths = [colWidth * 0.12, colWidth * 0.20, colWidth * 0.18, colWidth * 0.50]; // Make 'Absent Nos.' 50% of colWidth
         let headerX = leftColX;
 
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         tableHeaders.forEach((header, idx) => {
-          doc.text(header, headerX + 2, leftY + 4);
+          doc.text(header, headerX + colWidths[idx] / 2, leftY + 4, { align: 'center' });
           if (idx < tableHeaders.length - 1) {
             doc.line(headerX + colWidths[idx], leftY, headerX + colWidths[idx], leftY + 6);
           }
@@ -149,18 +171,30 @@ const AttendanceDownload = () => {
         doc.setFont("helvetica", "normal");
         leftLectures.forEach((lecture, idx) => {
           const rowHeightBase = 6;
-          let absentText = Array.isArray(lecture.absentStudents) && lecture.absentStudents.length > 0
-            ? lecture.absentStudents.join(", ")
-            : "-";
+          let absentText = "-";
+          if (Array.isArray(lecture.absentStudents)) {
+            if (lecture.absentStudents.length === 0) {
+              absentText = "NIL";
+            } else if (lecture.absentStudents.length === lecture.totalStudents) {
+              absentText = "All Absent";
+            } else {
+              absentText = lecture.absentStudents.join(", ");
+            }
+          }
+          // Remove maxLines limit so all absent numbers are shown
           const absentLines = doc.splitTextToSize(absentText, colWidths[3] - 4);
-          const maxLines = 3;
-          const linesToShow = absentLines.slice(0, maxLines);
+          // const maxLines = 3; // REMOVE this line
+          // const linesToShow = absentLines.slice(0, maxLines); // REMOVE this line
+          const linesToShow = absentLines; // Show all lines
           const rowHeight = rowHeightBase * linesToShow.length;
 
           if (idx % 2 === 1) {
             doc.setFillColor(240, 240, 240);
             doc.rect(leftColX, leftY, colWidth, rowHeight, 'F');
           }
+          // Set thin black border for all table borders
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.3);
           doc.rect(leftColX, leftY, colWidth, rowHeight, 'S');
 
           const cellData = [
@@ -173,11 +207,25 @@ const AttendanceDownload = () => {
           cellData.forEach((data, cellIdx) => {
             const cellWidth = colWidths[cellIdx];
             if (cellIdx === 3 && linesToShow.length > 1) {
+              // Absent Nos. column, left align as before
               linesToShow.forEach((line, lineIdx) => {
-                doc.text(line, cellX + 2, leftY + 4 + lineIdx * rowHeightBase);
+                // Center 'All Absent' or 'NIL' if that's the only line
+                if (linesToShow.length === 1 && (line === 'All Absent' || line === 'NIL')) {
+                  doc.text(line, cellX + cellWidth / 2, leftY + 4 + lineIdx * rowHeightBase, { align: 'center' });
+                } else {
+                  doc.text(line, cellX + 2, leftY + 4 + lineIdx * rowHeightBase);
+                }
               });
+            } else if (cellIdx === 3) {
+              // Center 'All Absent' or 'NIL' if that's the only line
+              if (linesToShow.length === 1 && (linesToShow[0] === 'All Absent' || linesToShow[0] === 'NIL')) {
+                doc.text(data, cellX + cellWidth / 2, leftY + 4, { align: 'center' });
+              } else {
+                doc.text(data, cellX + 2, leftY + 4);
+              }
             } else {
-              doc.text(data, cellX + 2, leftY + 4);
+              // Center Lec No., Subject, Faculty with less padding
+              doc.text(data, cellX + cellWidth / 2, leftY + 4, { align: 'center' });
             }
             if (cellIdx < cellData.length - 1) {
               doc.line(cellX + cellWidth, leftY, cellX + cellWidth, leftY + rowHeight);
@@ -193,23 +241,30 @@ const AttendanceDownload = () => {
       if (rightBatch) {
         const rightLectures = batchWiseData[rightBatch];
         doc.setFontSize(10);
+        // Draw light blue background for batch name
+        doc.setFillColor(204, 229, 255); // light blue
+        doc.rect(rightColX, rightY, colWidth, 7, 'F');
         doc.setFont("helvetica", "bold");
-        doc.text(`Batch: ${rightBatch}`, rightColX, rightY);
-        rightY += 5;
+        doc.setTextColor(0, 0, 0);
+        doc.text(`Batch: ${rightBatch}`, rightColX + colWidth / 2, rightY + 5, { align: "center" });
+        rightY += 7;
 
         const tableHeaders = ["Lec No.", "Subject", "Faculty", "Absent Nos."];
+        // Set thin black border for all table borders
+        doc.setDrawColor(0, 0, 0);
+        doc.setLineWidth(0.3);
         doc.setFillColor(200, 200, 200);
         doc.rect(rightColX, rightY, colWidth, 6, 'F');
-        doc.setDrawColor(0, 0, 0);
         doc.rect(rightColX, rightY, colWidth, 6, 'S');
 
-        const colWidths = [colWidth * 0.15, colWidth * 0.25, colWidth * 0.20, colWidth * 0.40];
+        // Update column width calculations for more space for 'Absent Nos.'
+        const colWidths = [colWidth * 0.12, colWidth * 0.20, colWidth * 0.18, colWidth * 0.50]; // Make 'Absent Nos.' 50% of colWidth
         let headerX = rightColX;
 
         doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         tableHeaders.forEach((header, idx) => {
-          doc.text(header, headerX + 2, rightY + 4);
+          doc.text(header, headerX + colWidths[idx] / 2, rightY + 4, { align: 'center' });
           if (idx < tableHeaders.length - 1) {
             doc.line(headerX + colWidths[idx], rightY, headerX + colWidths[idx], rightY + 6);
           }
@@ -220,18 +275,30 @@ const AttendanceDownload = () => {
         doc.setFont("helvetica", "normal");
         rightLectures.forEach((lecture, idx) => {
           const rowHeightBase = 6;
-          let absentText = Array.isArray(lecture.absentStudents) && lecture.absentStudents.length > 0
-            ? lecture.absentStudents.join(", ")
-            : "-";
+          let absentText = "-";
+          if (Array.isArray(lecture.absentStudents)) {
+            if (lecture.absentStudents.length === 0) {
+              absentText = "NIL";
+            } else if (lecture.absentStudents.length === lecture.totalStudents) {
+              absentText = "All Absent";
+            } else {
+              absentText = lecture.absentStudents.join(", ");
+            }
+          }
+          // Remove maxLines limit so all absent numbers are shown
           const absentLines = doc.splitTextToSize(absentText, colWidths[3] - 4);
-          const maxLines = 3;
-          const linesToShow = absentLines.slice(0, maxLines);
+          // const maxLines = 3; // REMOVE this line
+          // const linesToShow = absentLines.slice(0, maxLines); // REMOVE this line
+          const linesToShow = absentLines; // Show all lines
           const rowHeight = rowHeightBase * linesToShow.length;
 
           if (idx % 2 === 1) {
             doc.setFillColor(240, 240, 240);
             doc.rect(rightColX, rightY, colWidth, rowHeight, 'F');
           }
+          // Set thin black border for all table borders
+          doc.setDrawColor(0, 0, 0);
+          doc.setLineWidth(0.3);
           doc.rect(rightColX, rightY, colWidth, rowHeight, 'S');
 
           const cellData = [
@@ -244,11 +311,25 @@ const AttendanceDownload = () => {
           cellData.forEach((data, cellIdx) => {
             const cellWidth = colWidths[cellIdx];
             if (cellIdx === 3 && linesToShow.length > 1) {
+              // Absent Nos. column, left align as before
               linesToShow.forEach((line, lineIdx) => {
-                doc.text(line, cellX + 2, rightY + 4 + lineIdx * rowHeightBase);
+                // Center 'All Absent' or 'NIL' if that's the only line
+                if (linesToShow.length === 1 && (line === 'All Absent' || line === 'NIL')) {
+                  doc.text(line, cellX + cellWidth / 2, rightY + 4 + lineIdx * rowHeightBase, { align: 'center' });
+                } else {
+                  doc.text(line, cellX + 2, rightY + 4 + lineIdx * rowHeightBase);
+                }
               });
+            } else if (cellIdx === 3) {
+              // Center 'All Absent' or 'NIL' if that's the only line
+              if (linesToShow.length === 1 && (linesToShow[0] === 'All Absent' || linesToShow[0] === 'NIL')) {
+                doc.text(data, cellX + cellWidth / 2, rightY + 4, { align: 'center' });
+              } else {
+                doc.text(data, cellX + 2, rightY + 4);
+              }
             } else {
-              doc.text(data, cellX + 2, rightY + 4);
+              // Center Lec No., Subject, Faculty with less padding
+              doc.text(data, cellX + cellWidth / 2, rightY + 4, { align: 'center' });
             }
             if (cellIdx < cellData.length - 1) {
               doc.line(cellX + cellWidth, rightY, cellX + cellWidth, rightY + rowHeight);
@@ -335,50 +416,11 @@ const AttendanceDownload = () => {
       <div className="w-64 flex-shrink-0 bg-gray-50">
         <Sidebar />
       </div>
-      <div className="flex-1 p-6 space-y-6">
+      <div className="flex-1 p-6 space-y-6 mt-16">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Attendance Management</h1>
             <p className="text-gray-600 mt-2">Track attendance submissions and download daily reports</p>
-          </div>
-        </div>
-
-        {/* Date Selection */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Calendar className="w-5 h-5 mr-2" />
-              Select Date
-            </h2>
-          </div>
-          <div className="p-6">
-            <div className="relative max-w-xs">
-              <button
-                onClick={() => setDateDropdownOpen(!dateDropdownOpen)}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <span>
-                  {new Date(selectedDate).toLocaleDateString()}
-                </span>
-                <ChevronDown className="h-4 w-4 opacity-50" />
-              </button>
-              {dateDropdownOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                  {uniqueDates.map((date) => (
-                    <button
-                      key={date}
-                      onClick={() => {
-                        setSelectedDate(date);
-                        setDateDropdownOpen(false);
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
-                    >
-                      {new Date(date).toLocaleDateString()}
-                    </button>
-                  ))}
-          </div>
-        )}
-            </div>
           </div>
         </div>
 
@@ -425,13 +467,13 @@ const AttendanceDownload = () => {
                     </p>
                   </div>
                   {currentDayData.allSubmitted && (
-                  <button
+                    <button
                       onClick={() => handleDownloadAttendanceSheet(currentDayData)}
-                    className="w-full flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors"
+                      className="w-full flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors"
                     >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Sheet
-                  </button>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Sheet
+                    </button>
                   )}
                 </div>
               </div>
@@ -545,17 +587,17 @@ const AttendanceDownload = () => {
                     </div>
                   </div>
                   {submission.submitted && submission.absentStudents.length > 0 && (
-                      <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-gray-200">
                       <p className="text-sm text-gray-500 mb-2">Absent Students:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {submission.absentStudents.map((student, index) => (
+                      <div className="flex flex-wrap gap-2">
+                        {submission.absentStudents.map((student, index) => (
                           <span key={index} className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">
-                              {student}
-                            </span>
-                          ))}
-                        </div>
+                            {student}
+                          </span>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
