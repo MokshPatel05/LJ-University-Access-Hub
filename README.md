@@ -1,4 +1,4 @@
-# FSD-Group College Attendance Management System
+# LJ University Access Hub
 
 A full-stack web application for managing college attendance, built with **React (Vite, Tailwind CSS)** for the frontend and **Node.js (Express, MongoDB, Mongoose)** for the backend.
 
@@ -71,7 +71,7 @@ FSD-Group/
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/FSD-Group.git
+git clone [https://github.com/yourusername/FSD-Group.git](https://github.com/MokshPatel05/LJ-University-Access-Hub.git)
 cd FSD-Group
 ```
 
