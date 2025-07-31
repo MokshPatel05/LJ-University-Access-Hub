@@ -170,18 +170,19 @@ npm run dev
 
 ## Screenshots
 
-**Login Page**
+### Login Page
+
 <img width="1901" height="1269" alt="Image" src="https://github.com/user-attachments/assets/d2eea872-9c2c-4c46-83f2-98298ce8374d" />
 
-**Dashboard**
+### Dashboard
 <img width="2560" height="4318" alt="Image" src="https://github.com/user-attachments/assets/8863622d-fbc5-4c00-96c2-eeddf8df38f5" />
 
-**Teacher Panel**
+### Teacher Panel
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/d2714000-06bd-430f-9f3c-609628fc14a8" />
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/082d2c75-9316-4d98-82d5-dd92a8a3fe3c" />
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/1d806dc3-d41e-4ad4-8d57-e76e6c79f70f" />
 
-**Admin Panel**
+### Admin Panel
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/b1f5fac4-2b0b-4a2b-8a91-46d3ff0d8b68" />
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/544f9a81-d992-4c2b-97a1-b6e07047d9ab" />
 <img width="2560" height="1600" alt="Image" src="https://github.com/user-attachments/assets/3cc1dfe8-5ee3-4b1e-9a9d-abcca7d1fc47" />
